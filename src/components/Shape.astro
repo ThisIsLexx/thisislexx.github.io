@@ -1,0 +1,56 @@
+---
+/**
+ * Formas primarias Bauhaus para decorar secciones.
+ * Puro CSS: sin imágenes, sin peso extra, escalan sin perder nitidez.
+ */
+interface Props {
+  tipo: 'circle' | 'square' | 'triangle' | 'quarter' | 'halfcircle' | 'ring';
+  color?: 'red' | 'magenta' | 'blue' | 'ink' | 'paper';
+  size?: string;
+  class?: string;
+  style?: string;
+}
+
+const { tipo, color = 'red', size = '8rem', class: cls = '', style = '' } = Astro.props;
+---
+
+<span
+  class:list={['shape', `shape--${tipo}`, `shape--${color}`, cls]}
+  style={`--s:${size};${style}`}
+  aria-hidden="true"
+></span>
+
+<style>
+  .shape {
+    display: block;
+    inline-size: var(--s);
+    block-size: var(--s);
+    background: var(--c);
+    flex: none;
+  }
+
+  .shape--red { --c: var(--brand-red); }
+  .shape--magenta { --c: var(--brand-magenta); }
+  .shape--blue { --c: var(--brand-blue); }
+  .shape--ink { --c: var(--brand-ink); }
+  .shape--paper { --c: var(--brand-paper); }
+
+  .shape--circle { border-radius: 50%; }
+  .shape--square { border-radius: 0; }
+  .shape--halfcircle { border-radius: var(--s) var(--s) 0 0; block-size: calc(var(--s) / 2); }
+  .shape--quarter { border-radius: var(--s) 0 0 0; }
+
+  .shape--ring {
+    background: none;
+    border: calc(var(--s) / 6) solid var(--c);
+    border-radius: 50%;
+  }
+
+  .shape--triangle {
+    background: none;
+    inline-size: 0;
+    block-size: 0;
+    border-inline: calc(var(--s) / 2) solid transparent;
+    border-block-end: var(--s) solid var(--c);
+  }
+</style>

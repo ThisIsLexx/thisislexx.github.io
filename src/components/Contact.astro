@@ -1,0 +1,74 @@
+---
+import { CONTACT, waHref, mailHref } from '../config';
+import Shape from './Shape.astro';
+
+interface Props {
+  /** Número de sección; lo calcula index.astro según cuáles se pintan */
+  n?: string;
+}
+
+const { n = '08' } = Astro.props;
+---
+
+<section class="section contacto" id="contacto">
+  <div class="wrap contacto__grid">
+    <div>
+      <p class="eyebrow">{n} / Contacto</p>
+      <h2>Cuéntame<br />tu proyecto</h2>
+      <p class="lead">
+        No hay formulario que llenar. Escríbeme por WhatsApp o correo con
+        tu género, cuántas canciones son y para cuándo las necesitas.
+        Te respondo con un presupuesto en menos de 24 horas.
+      </p>
+
+      <div class="contacto__cta">
+        <a class="btn" href={waHref} target="_blank" rel="noopener">
+          Abrir WhatsApp
+        </a>
+        <a class="btn btn--blue" href={mailHref}>Enviar correo</a>
+      </div>
+
+      <p class="contacto__mail">
+        <a href={mailHref}>{CONTACT.email}</a>
+      </p>
+    </div>
+
+    <div class="contacto__art" aria-hidden="true">
+      <Shape tipo="ring" color="magenta" size="min(30vw, 12rem)" />
+      <Shape tipo="halfcircle" color="red" size="min(34vw, 14rem)" />
+      <Shape tipo="square" color="blue" size="min(18vw, 7rem)" />
+    </div>
+  </div>
+</section>
+
+<style>
+  .contacto { background: var(--brand-paper-dim); }
+
+  .contacto__grid { display: grid; gap: var(--space-5); align-items: center; }
+
+  .contacto__cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-block-start: var(--space-4);
+  }
+
+  .contacto__mail {
+    margin-block-start: var(--space-3);
+    font-size: var(--step-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+
+  .contacto__art {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: center;
+    gap: var(--space-3);
+  }
+
+  @media (width >= 55rem) {
+    .contacto__grid { grid-template-columns: 1.1fr 0.9fr; gap: var(--space-6); }
+  }
+</style>

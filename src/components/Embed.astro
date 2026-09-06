@@ -1,0 +1,77 @@
+---
+/**
+ * Reproductor embebido. Usar embeds evita alojar audio en el repo
+ * (GitHub Pages: 1 GB de repo y 100 GB/mes de tráfico) y de paso
+ * suma reproducciones en tu perfil real.
+ *
+ * Cada plataforma tiene su propio alto natural. Forzarlas todas a un
+ * mismo aspect-ratio deja franjas en blanco dentro del iframe (el
+ * reproductor se dibuja arriba y el resto queda vacío), así que aquí
+ * se usa la altura que cada una recomienda:
+ *   · Spotify    80px compacto · 352px lista con scroll · o alto exacto
+ *   · SoundCloud 300px — el reproductor visual, con la portada escalada
+ *   · YouTube    16:9 real, que sí es proporcional
+ * Spotify no informa de la altura que realmente ocupa, así que 352px
+ * solo se usa cuando el trabajo lo pide explícitamente (reproductor:
+ * lista) y hay suficientes canciones para llenarla.
+ */
+interface Props {
+  plataforma: 'spotify' | 'youtube' | 'soundcloud';
+  embedId: string;
+  titulo: string;
+  reproductor?: 'compacto' | 'lista' | number;
+}
+
+const { plataforma, embedId, titulo, reproductor = 'compacto' } = Astro.props;
+
+const scUrl = encodeURIComponent('https://api.soundcloud.com/tracks/' + embedId);
+
+const fuentes = {
+  spotify: 'https://open.spotify.com/embed/' + embedId + '?theme=0',
+  youtube: 'https://www.youtube-nocookie.com/embed/' + embedId + '?rel=0',
+  soundcloud:
+    'https://w.soundcloud.com/player/?url=' + scUrl +
+    '&color=%23cc1a12&visual=true&hide_related=true&show_comments=false&show_teaser=false',
+};
+
+const src = fuentes[plataforma];
+
+const alto = {
+  // 80px es lo que mide el reproductor compacto de Spotify: medido
+  // en pantalla, no sacado de la documentación. Los 152px que Spotify
+  // sugiere dejan casi la mitad de la caja vacía.
+  spotify:
+    typeof reproductor === 'number'
+      ? reproductor + 'px'
+      : reproductor === 'lista'
+        ? '352px'
+        : '80px',
+  soundcloud: '300px',
+  youtube: null, // proporcional, no de alto fijo
+}[plataforma];
+
+const estilo = alto ? '--alto:' + alto : '--ratio:16 / 9';
+---
+
+<div class="embed" style={estilo}>
+  <iframe
+    src={src}
+    title={'Reproductor: ' + titulo}
+    loading="lazy"
+    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+    allowfullscreen
+  ></iframe>
+</div>
+
+<style>
+  .embed {
+    /* Solo uno de los dos actúa: --alto para reproductores de altura
+       fija, --ratio para los proporcionales como YouTube. */
+    block-size: var(--alto, auto);
+    aspect-ratio: var(--ratio, auto);
+    border: var(--border-w) solid var(--brand-ink);
+    background: var(--embed-bg);
+  }
+
+  .embed iframe { inline-size: 100%; block-size: 100%; border: 0; }
+</style>

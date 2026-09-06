@@ -1,0 +1,445 @@
+---
+/**
+ * HERO — Portada: fotografía del estudio de fondo, atenuada con una
+ * viñeta, y una capa de partículas por encima que reacciona al
+ * puntero.
+ *
+ * Es una "isla oscura": el fondo es siempre la foto, así que aquí
+ * dentro los papeles se invierten pase lo que pase con el tema de la
+ * página. Por eso el bloque redefine los roles de color en lugar de
+ * heredarlos — si no, en modo claro los bordes de los botones serían
+ * casi negros sobre una foto casi negra.
+ *
+ * Todo lo editable (qué foto, cuánto se atenúa, si hay partículas)
+ * vive en HERO, dentro de src/config.ts.
+ */
+import { SITE, CONTACT, HERO, waHref, mailHref } from '../config';
+import { resolverImagen } from '../lib/imagen';
+
+const foto = resolverImagen(HERO.imagen, 1800);
+const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
+---
+
+<section
+  class:list={['hero', { 'hero--con-foto': foto !== '' }]}
+  style={`--hero-encuadre: ${HERO.encuadre};
+          --hero-oscurecer: ${HERO.oscurecer};
+          --hero-vineta: ${HERO.vineta};`}
+>
+  {
+    foto !== '' && (
+      <div class="hero__fondo" aria-hidden="true">
+        <picture>
+          {fotoMovil !== foto && <source media="(max-width: 54.99rem)" srcset={fotoMovil} />}
+          {/* fetchpriority alto: es la imagen más grande de la primera
+              pantalla, así que es la que decide la nota de carga. */}
+          <img src={foto} alt="" fetchpriority="high" decoding="async" />
+        </picture>
+        <div class="hero__velo"></div>
+        {HERO.particulas && <canvas class="hero__particulas" data-particulas></canvas>}
+      </div>
+    )
+  }
+
+  <div class="hero__grid wrap">
+    <div class="hero__text">
+      <p class="eyebrow">{SITE.role} · {SITE.city}</p>
+      <h1>
+        Tu canción<br />
+        <span class="hl">merece</span><br />
+        sonar bien
+      </h1>
+      <p class="lead">
+        Asesorías, producciones y mezcla para artistas independientes.
+        Proceso claro, fechas que se cumplen y un máster listo para
+        subir el mismo día que lo apruebas.
+      </p>
+      <div class="hero__cta">
+        <a class="btn" href={waHref} target="_blank" rel="noopener">WhatsApp</a>
+        <a class="btn btn--ghost" href={mailHref}>Escribir correo</a>
+      </div>
+      <p class="hero__meta muted">
+        Respuesta en menos de 48 h · {CONTACT.email}
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+  /**
+   * PARTÍCULAS — Un campo de puntos que flota despacio sobre la foto
+   * y se aparta del puntero. Sin librerías: son cuarenta puntos y una
+   * resta de vectores, no hace falta traerse 30 kB para eso.
+   *
+   * Se detiene sola cuando el hero sale de pantalla o la pestaña pasa
+   * a segundo plano: un rAF girando en una pestaña oculta es batería
+   * de alguien.
+   */
+  const lienzo = document.querySelector<HTMLCanvasElement>('[data-particulas]');
+  const hero = lienzo?.closest<HTMLElement>('.hero');
+
+  if (lienzo && hero) {
+    const ctx = lienzo.getContext('2d')!;
+    const quieto = matchMedia('(prefers-reduced-motion: reduce)');
+
+    /** Figuras por píxel de superficie. Subirlo llena más el campo. */
+    const DENSIDAD = 1 / 38000;
+    const MAX = 46;
+    /** Radio de la figura, en píxeles CSS: de la más chica a la más grande */
+    const TAM = [5, 17];
+    /** Opacidad de las figuras. Es un fondo: si se lee, estorba. */
+    const ALFA = 0.17;
+    /** Radio de influencia del puntero, en píxeles CSS */
+    const ALCANCE = 150;
+    /** Distancia a la que dos figuras se unen con un hilo */
+    const HILO = 150;
+
+    /** El vocabulario de formas del sitio, el mismo de Shape.astro */
+    const FIGURAS = ['circulo', 'medio', 'cuarto', 'triangulo', 'cuadrado'] as const;
+    type Figura = (typeof FIGURAS)[number];
+
+    let w = 0;
+    let h = 0;
+    let dpr = 1;
+    let puntos: {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      r: number;
+      figura: Figura;
+      giro: number;
+      vgiro: number;
+      relleno: boolean;
+    }[] = [];
+    let raf = 0;
+    let visible = true;
+
+    // El puntero vive fuera del lienzo hasta que entra de verdad: así
+    // el campo arranca en reposo y no con un agujero en la esquina.
+    const raton = { x: -9999, y: -9999 };
+
+    /** Todas blancas. El canvas no entiende var(), hay que resolverlo. */
+    const blanco =
+      getComputedStyle(document.documentElement).getPropertyValue('--paper-fixed').trim() ||
+      '#f2efe6';
+
+    function sembrar() {
+      const cuantos = Math.min(MAX, Math.round(w * h * DENSIDAD));
+      puntos = Array.from({ length: cuantos }, () => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        // Velocidades pequeñas: esto tiene que notarse solo si te paras a mirar
+        vx: (Math.random() - 0.5) * 0.22,
+        vy: (Math.random() - 0.5) * 0.22,
+        r: TAM[0] + Math.random() * (TAM[1] - TAM[0]),
+        figura: FIGURAS[Math.floor(Math.random() * FIGURAS.length)],
+        giro: Math.random() * Math.PI * 2,
+        // Media vuelta cada minuto largo: gira, pero no se ve girar
+        vgiro: (Math.random() - 0.5) * 0.0022,
+        // Una de cada tres va a línea, como las figuras del resto del sitio
+        relleno: Math.random() > 0.34,
+      }));
+    }
+
+    function medir() {
+      const caja = hero!.getBoundingClientRect();
+      // Tope de seguridad: si algún día el CSS del lienzo no llega a
+      // aplicarse, el canvas pasa a ocupar sitio en el flujo, estira
+      // el hero, el ResizeObserver vuelve a medir y el bucle se come
+      // el navegador. Con el tope, como mucho sale feo.
+      w = Math.min(caja.width, 4000);
+      h = Math.min(caja.height, 4000);
+      // Cap a 2: en un móvil con dpr 3 el lienzo pasa de 6 millones de
+      // píxeles y el ventilador se entera.
+      dpr = Math.min(devicePixelRatio || 1, 2);
+      lienzo!.width = Math.round(w * dpr);
+      lienzo!.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      sembrar();
+    }
+
+    /** Traza la figura centrada en (0,0); el giro y la posición ya
+        vienen puestos en la matriz del contexto. */
+    function trazar(figura: Figura, r: number) {
+      ctx.beginPath();
+      switch (figura) {
+        case 'circulo':
+          ctx.arc(0, 0, r, 0, Math.PI * 2);
+          break;
+        case 'medio':
+          ctx.arc(0, 0, r, 0, Math.PI);
+          ctx.closePath();
+          break;
+        case 'cuarto':
+          // El cuarto de círculo del logotipo: dos radios y el arco
+          ctx.moveTo(0, 0);
+          ctx.arc(0, 0, r, 0, Math.PI / 2);
+          ctx.closePath();
+          break;
+        case 'triangulo': {
+          // Equilátero apoyado en su centro
+          const a = (Math.PI * 2) / 3;
+          ctx.moveTo(0, -r);
+          ctx.lineTo(r * Math.sin(a), -r * Math.cos(a));
+          ctx.lineTo(r * Math.sin(2 * a), -r * Math.cos(2 * a));
+          ctx.closePath();
+          break;
+        }
+        case 'cuadrado':
+          ctx.rect(-r * 0.8, -r * 0.8, r * 1.6, r * 1.6);
+          break;
+      }
+    }
+
+    function pintar() {
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = blanco;
+      ctx.strokeStyle = blanco;
+
+      // Hilos entre figuras cercanas. Van primero, para quedar debajo.
+      ctx.lineWidth = 1;
+      for (let i = 0; i < puntos.length; i++) {
+        for (let j = i + 1; j < puntos.length; j++) {
+          const dx = puntos[i].x - puntos[j].x;
+          const dy = puntos[i].y - puntos[j].y;
+          const d = Math.hypot(dx, dy);
+          if (d > HILO) continue;
+          ctx.globalAlpha = (1 - d / HILO) * ALFA * 0.4;
+          ctx.beginPath();
+          ctx.moveTo(puntos[i].x, puntos[i].y);
+          ctx.lineTo(puntos[j].x, puntos[j].y);
+          ctx.stroke();
+        }
+      }
+
+      ctx.lineWidth = 1.5;
+      for (const p of puntos) {
+        ctx.globalAlpha = ALFA;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.giro);
+        trazar(p.figura, p.r);
+        p.relleno ? ctx.fill() : ctx.stroke();
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function mover() {
+      for (const p of puntos) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.giro += p.vgiro;
+
+        // Rebote en los bordes: el campo no se vacía nunca
+        if (p.x < 0 || p.x > w) p.vx *= -1;
+        if (p.y < 0 || p.y > h) p.vy *= -1;
+
+        // Empuje del puntero: cuanto más cerca, más se aparta
+        const dx = p.x - raton.x;
+        const dy = p.y - raton.y;
+        const d = Math.hypot(dx, dy);
+        if (d < ALCANCE && d > 0.01) {
+          const fuerza = (1 - d / ALCANCE) * 0.9;
+          p.x += (dx / d) * fuerza;
+          p.y += (dy / d) * fuerza;
+        }
+
+        // Un punto empujado fuera se recoloca dentro
+        p.x = Math.max(0, Math.min(w, p.x));
+        p.y = Math.max(0, Math.min(h, p.y));
+      }
+    }
+
+    function bucle() {
+      mover();
+      pintar();
+      raf = requestAnimationFrame(bucle);
+    }
+
+    function arrancar() {
+      if (raf || !visible || quieto.matches) return;
+      raf = requestAnimationFrame(bucle);
+    }
+
+    function parar() {
+      cancelAnimationFrame(raf);
+      raf = 0;
+    }
+
+    // Con "menos movimiento" activado el campo se pinta una vez y se
+    // queda quieto: la textura sigue ahí, el movimiento no.
+    medir();
+    if (quieto.matches) pintar();
+    else arrancar();
+
+    new ResizeObserver(() => {
+      medir();
+      if (quieto.matches || !raf) pintar();
+    }).observe(hero);
+
+    new IntersectionObserver(
+      ([e]) => {
+        visible = e.isIntersecting;
+        visible ? arrancar() : parar();
+      },
+      { threshold: 0 }
+    ).observe(hero);
+
+    document.addEventListener('visibilitychange', () =>
+      document.hidden ? parar() : arrancar()
+    );
+
+    // El lienzo no recibe eventos (pointer-events: none) para no
+    // taparle los clics a los botones, así que escuchamos en el hero.
+    hero.addEventListener('pointermove', (e) => {
+      const caja = hero.getBoundingClientRect();
+      raton.x = e.clientX - caja.left;
+      raton.y = e.clientY - caja.top;
+    });
+    hero.addEventListener('pointerleave', () => {
+      raton.x = -9999;
+      raton.y = -9999;
+    });
+
+    quieto.addEventListener('change', () => {
+      parar();
+      if (quieto.matches) pintar();
+      else arrancar();
+    });
+  }
+</script>
+
+<style>
+  .hero {
+    position: relative;
+    isolation: isolate;
+    padding-block: clamp(3rem, 7vw, 7rem);
+    overflow: hidden;
+  }
+
+  /* Con foto, el hero es una portada: tiene que caber en la primera
+     pantalla o deja de serlo. Por eso aquí el titular se topa antes
+     que en el resto del sitio y el aire de arriba y abajo se recorta. */
+  .hero--con-foto { padding-block: clamp(2.5rem, 5vw, 4.5rem); }
+  .hero--con-foto h1 { font-size: min(var(--step-4), 5.5rem); }
+
+  /* ── Isla oscura ───────────────────────────────────────────────
+     Con foto de fondo, el hero es oscuro en los dos temas. Los roles
+     de color se reasignan aquí (no se heredan) porque un custom
+     property ya viene resuelto de :root: redefinir --brand-red no
+     cambiaría --color-accent, hay que tocar el rol directamente.   */
+  .hero--con-foto {
+    --brand-ink: var(--paper-fixed);
+    --brand-paper: var(--ink-fixed);
+    --brand-line: var(--paper-fixed);
+    --color-fg: var(--paper-fixed);
+    --color-muted: var(--ink-soft-fixed);
+    --color-accent: var(--red-fixed);
+    --color-accent-2: var(--blue-fixed);
+    --color-accent-3: var(--magenta-fixed);
+    --color-on-accent: var(--ink-fixed);
+    --color-on-magenta: var(--ink-fixed);
+
+    color: var(--color-fg);
+    background: var(--ink-fixed);
+    min-block-size: min(84svh, 44rem);
+    display: grid;
+    align-items: center;
+    border-block-end: var(--border-w-thick) solid var(--brand-line);
+  }
+
+  /* ── Capas del fondo ───────────────────────────────────────────
+     foto (z0) · viñeta (z1) · partículas (z2) · texto (z3)        */
+  .hero__fondo {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .hero__fondo img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    object-position: var(--hero-encuadre, center);
+  }
+
+  /* La viñeta son tres capas: el oscurecido plano que baja el brillo
+     general, un degradado desde abajo para que el texto tenga suelo,
+     y la elipse que cierra las esquinas. */
+  .hero__velo {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+      radial-gradient(
+        ellipse 95% 80% at 50% 45%,
+        transparent 0%,
+        rgb(0 0 0 / calc(var(--hero-vineta, 0.9) * 0.9)) 100%
+      ),
+      linear-gradient(to top, rgb(0 0 0 / 0.75), transparent 60%),
+      rgb(0 0 0 / var(--hero-oscurecer, 0.5));
+  }
+
+  .hero__particulas {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    inline-size: 100%;
+    block-size: 100%;
+    /* Que los clics lleguen a los botones */
+    pointer-events: none;
+  }
+
+  .hero__grid {
+    position: relative;
+    z-index: 3;
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .hero__text { max-inline-size: 42rem; }
+
+  .hl {
+    background: var(--color-accent-3);
+    color: var(--color-on-magenta);
+    padding-inline: 0.15em;
+    box-decoration-break: clone;
+  }
+
+  .hero .lead { margin-block-start: var(--space-3); }
+
+  /* Sobre una foto, el texto necesita despegarse del fondo aunque el
+     velo ya lo haya oscurecido: la sombra evita que una zona clara de
+     la imagen se coma una línea. */
+  .hero--con-foto h1,
+  .hero--con-foto .lead,
+  .hero--con-foto .eyebrow,
+  .hero--con-foto .hero__meta {
+    text-shadow: 0 2px 18px rgb(0 0 0 / 0.55);
+  }
+
+  .hero--con-foto .hl { text-shadow: none; }
+
+  .hero__cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-block-start: var(--space-4);
+  }
+
+  .hero__meta {
+    margin-block-start: var(--space-3);
+    font-size: var(--step-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    /* El correo es largo y no se puede partir por cualquier sitio */
+    overflow-wrap: anywhere;
+  }
+
+  @media (width >= 55rem) {
+    .hero--con-foto { min-block-size: min(80svh, 46rem); }
+    .hero__text { max-inline-size: 36rem; }
+  }
+</style>

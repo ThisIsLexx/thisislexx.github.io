@@ -1,0 +1,282 @@
+---
+import { getCollection } from 'astro:content';
+import { SITE, NAV, waHref } from '../config';
+
+/* Estudio y Sesiones solo se pintan si su colección trae alguna
+   imagen, así que sus enlaces del menú se esconden hasta entonces.
+   Sin esto el menú ofrecería un ancla que no existe en la página. */
+const conImagen = async (nombre: 'estudio' | 'galeria') =>
+  (await getCollection(nombre)).some((e) => e.data.imagen.trim() !== '');
+
+const disponible = {
+  estudio: await conImagen('estudio'),
+  galeria: await conImagen('galeria'),
+};
+
+const nav = NAV.filter((item) => !item.requiere || disponible[item.requiere]);
+---
+
+<header class="bar">
+  <div class="bar__inner wrap">
+    <a href="/" class="logo" aria-label={`${SITE.name}, inicio`}>
+      <span class="logo__marks" aria-hidden="true">
+        <i class="m m--sq"></i><i class="m m--ci"></i><i class="m m--tr"></i>
+      </span>
+      <span class="logo__text">{SITE.name}</span>
+    </a>
+
+    <nav class="nav" aria-label="Principal">
+      {nav.map((item) => <a href={item.href}>{item.label}</a>)}
+    </nav>
+
+    <div class="bar__actions">
+      <button
+        type="button"
+        class="toggle"
+        data-theme-toggle
+        aria-label="Cambiar entre modo claro y oscuro"
+      >
+        <span class="toggle__half" aria-hidden="true"></span>
+      </button>
+      <a class="btn btn--sm cotizar" href={waHref} target="_blank" rel="noopener">Cotizar</a>
+
+      <button
+        type="button"
+        class="menu"
+        data-menu
+        aria-expanded="false"
+        aria-controls="menu-movil"
+      >
+        <span class="menu__barras" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="visually-hidden">Menú</span>
+      </button>
+    </div>
+  </div>
+
+  {/* Panel desplegable: el mismo menú, para cuando la barra no cabe.
+      Se esconde con [hidden] y no solo con CSS, para que el lector de
+      pantalla y el tabulador tampoco lo encuentren cuando está cerrado. */}
+  <nav class="panel" id="menu-movil" aria-label="Principal, móvil" hidden>
+    <ul role="list">
+      {nav.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+    </ul>
+
+    {/* En pantallas muy estrechas el botón no cabe en la barra, así que
+        el panel se lo queda: la llamada a la acción no puede depender
+        de que sobren 20 píxeles. */}
+    <a class="btn panel__cta" href={waHref} target="_blank" rel="noopener">Cotizar por WhatsApp</a>
+  </nav>
+</header>
+
+<script>
+  /* ── Menú desplegable ─────────────────────────────────────────── */
+  const boton = document.querySelector<HTMLButtonElement>('[data-menu]');
+  const panel = document.querySelector<HTMLElement>('#menu-movil');
+
+  const abrir = (si: boolean) => {
+    if (!boton || !panel) return;
+    boton.setAttribute('aria-expanded', String(si));
+    panel.hidden = !si;
+    // Con el panel abierto la página de detrás no debe moverse
+    document.documentElement.classList.toggle('menu-abierto', si);
+  };
+
+  boton?.addEventListener('click', () =>
+    abrir(boton.getAttribute('aria-expanded') !== 'true')
+  );
+
+  // Al elegir destino, el menú sobra
+  panel?.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest('a')) abrir(false);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || panel?.hidden) return;
+    abrir(false);
+    boton?.focus();
+  });
+
+  // Si la ventana crece hasta que la barra ya cabe entera, el panel
+  // se cierra solo: si no, queda abierto y tapando media pantalla.
+  const ancha = matchMedia('(width >= 60rem)');
+  ancha.addEventListener('change', (e) => e.matches && abrir(false));
+
+  /* ── Interruptor de tema ──────────────────────────────────────── */
+  const btn = document.querySelector('[data-theme-toggle]');
+  btn?.addEventListener('click', () => {
+    const root = document.documentElement;
+    const current =
+      root.dataset.theme ??
+      (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const next = current === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    localStorage.setItem('theme', next);
+  });
+</script>
+
+<style>
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--color-bg);
+    border-block-end: var(--border-w-thick) solid var(--brand-line);
+  }
+
+  .bar__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-block-size: 4.5rem;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    text-decoration: none;
+    font-family: var(--font-display);
+    font-size: var(--step-sm);
+    letter-spacing: 0.02em;
+  }
+
+  .logo__marks { display: flex; align-items: center; gap: 4px; }
+  .m { display: block; inline-size: 12px; block-size: 12px; }
+  .m--sq { background: var(--brand-red); }
+  .m--ci { background: var(--brand-blue); border-radius: 50%; }
+  .m--tr {
+    inline-size: 0; block-size: 0;
+    border-inline: 6px solid transparent;
+    border-block-end: 12px solid var(--brand-magenta);
+  }
+
+  .nav { display: none; gap: var(--space-3); }
+
+  .nav a {
+    font-size: var(--step-xs);
+    font-weight: 600;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    text-decoration: none;
+    padding-block: 0.5em;
+    border-block-end: var(--border-w) solid transparent;
+    transition: border-color var(--transition);
+  }
+
+  .nav a:hover { border-block-end-color: var(--color-accent); }
+
+  .bar__actions { display: flex; align-items: center; gap: var(--space-2); }
+
+  .toggle {
+    inline-size: 1.75rem;
+    block-size: 1.75rem;
+    padding: 0;
+    background: none;
+    border: var(--border-w) solid var(--brand-ink);
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+  }
+
+  /* Círculo mitad tinta / mitad papel: el símbolo más Bauhaus posible */
+  .toggle__half {
+    inline-size: 100%;
+    block-size: 100%;
+    background: linear-gradient(90deg, var(--brand-ink) 50%, transparent 50%);
+  }
+
+  .btn--sm { padding: 0.55em 1.1em; font-size: var(--step-xs); box-shadow: 3px 3px 0 var(--brand-ink); }
+
+  /* ── Botón de menú ─────────────────────────────────────────────
+     Tres barras con los tres colores de la marca, como el logo. Al
+     abrirse se cruzan: la del medio desaparece y las otras dos giran. */
+  .menu {
+    --barra: 2.5rem;
+    display: grid;
+    place-items: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    padding: 0;
+    background: none;
+    border: var(--border-w) solid var(--brand-ink);
+    cursor: pointer;
+  }
+
+  .menu__barras {
+    display: grid;
+    gap: 4px;
+    inline-size: 1.25rem;
+  }
+
+  .menu__barras i {
+    display: block;
+    block-size: 3px;
+    background: var(--brand-ink);
+    transition: transform var(--transition), opacity var(--transition);
+  }
+
+  .menu__barras i:nth-child(1) { background: var(--brand-red); }
+  .menu__barras i:nth-child(2) { background: var(--brand-blue); }
+  .menu__barras i:nth-child(3) { background: var(--brand-magenta); }
+
+  .menu[aria-expanded='true'] i:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .menu[aria-expanded='true'] i:nth-child(2) { opacity: 0; }
+  .menu[aria-expanded='true'] i:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  /* ── Panel ─────────────────────────────────────────────────────
+     Ocupa lo que le queda a la pantalla por debajo de la barra y
+     hace scroll solo si los enlaces no caben (móvil apaisado). */
+  .panel {
+    max-block-size: calc(100dvh - 4.5rem);
+    overflow-y: auto;
+    background: var(--color-bg);
+    border-block-end: var(--border-w-thick) solid var(--brand-line);
+  }
+
+  .panel ul {
+    margin: 0;
+    padding: var(--space-2) var(--gutter) var(--space-3);
+    list-style: none;
+    display: grid;
+  }
+
+  .panel ul a {
+    display: block;
+    /* 3rem de alto real: un enlace de menú se toca con el pulgar */
+    padding-block: 0.9rem;
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    text-transform: uppercase;
+    text-decoration: none;
+    border-block-end: var(--border-w) solid var(--brand-paper-dim);
+  }
+
+  .panel li:last-child a { border-block-end: 0; }
+
+  .panel__cta {
+    display: flex;
+    justify-content: center;
+    margin: 0 var(--gutter) var(--space-3);
+  }
+
+  /* Por debajo de 30rem no caben a la vez el logo, el interruptor de
+     tema, el botón de cotizar y el de menú: gana el menú, y cotizar
+     se va dentro del panel. */
+  @media (width < 30rem) {
+    .cotizar { display: none; }
+  }
+
+  @media (width >= 30rem) {
+    .panel__cta { display: none; }
+  }
+
+  @media (width >= 60rem) {
+    .nav { display: flex; }
+    /* Con sitio en la barra, el botón y su panel sobran */
+    .menu { display: none; }
+    .panel { display: none; }
+  }
+</style>

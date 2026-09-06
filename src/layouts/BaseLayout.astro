@@ -1,0 +1,107 @@
+---
+import '../styles/global.css';
+import { SITE, CONTACT, SOCIAL } from '../config';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Imagen para redes sociales, dentro de /public */
+  image?: string;
+}
+
+const {
+  title = `${SITE.name} — ${SITE.role} · ${SITE.tagline}`,
+  description = SITE.description,
+  image = '/img/og.png',
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL(image, Astro.site);
+
+// Datos estructurados: ayuda a que Google entienda que ofreces
+// servicios de producción musical y muestre rich results.
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfessionalService',
+  name: SITE.name,
+  description: SITE.description,
+  url: SITE.url,
+  email: CONTACT.email,
+  telephone: `+${CONTACT.whatsapp}`,
+  areaServed: SITE.city,
+  address: { '@type': 'PostalAddress', addressLocality: SITE.city },
+  sameAs: SOCIAL.map((s) => s.url),
+  serviceType: ['Producción musical', 'Mezcla', 'Mastering'],
+};
+---
+
+<!doctype html>
+<html lang={SITE.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="/fonts/ClashDisplay-700.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="canonical" href={canonical} />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#cc1a12" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content={SITE.locale} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+    <!-- Aplica el tema guardado antes del primer pintado: sin parpadeo -->
+    <script is:inline>
+      const saved = localStorage.getItem('theme');
+      if (saved) document.documentElement.dataset.theme = saved;
+    </script>
+  </head>
+
+  <body>
+    <a href="#main" class="skip">Saltar al contenido</a>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+
+    {/* En pantallas táctiles, el scroll enciende los efectos que en
+        escritorio enciende el ratón. Ver src/scripts/foco.ts */}
+    <script>
+      import '../scripts/foco';
+    </script>
+
+    <style>
+      .skip {
+        position: absolute;
+        top: -100%;
+        left: var(--gutter);
+        z-index: 100;
+        padding: 0.75em 1.25em;
+        background: var(--color-accent);
+        color: var(--color-on-accent);
+        border: var(--border-w) solid var(--brand-ink);
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .skip:focus { top: var(--space-2); }
+    </style>
+  </body>
+</html>

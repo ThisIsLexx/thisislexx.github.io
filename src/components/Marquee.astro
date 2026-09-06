@@ -1,0 +1,79 @@
+---
+/**
+ * Banda de referencias: artistas, sellos, estudios y medios.
+ * Sustituye los textos por los tuyos; si tienes logos, cámbialos
+ * por <img> con filter: grayscale(1) para mantener la paleta.
+ */
+const referencias = [
+  'CELG', 'OVAN', 
+  'GustavoBK', 'Bleuss', 
+  'CELG', 'OVAN', 
+  'GustavoBK', 'Bleuss', 
+];
+---
+
+<div class="marquee" role="region" aria-label="Artistas y sellos con los que he trabajado">
+  <div class="marquee__track">
+    {
+      [0, 1].map((copy) => (
+        <ul class="marquee__list" role="list" aria-hidden={copy === 1 ? 'true' : undefined}>
+          {referencias.map((r) => (
+            <li>
+              <span class="dot" aria-hidden="true"></span>
+              {r}
+            </li>
+          ))}
+        </ul>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .marquee {
+    overflow: hidden;
+    background: var(--brand-magenta);
+    color: var(--color-on-magenta);
+    border-block: var(--border-w-thick) solid var(--color-on-magenta);
+    padding-block: var(--space-2);
+  }
+
+  .marquee__track { display: flex; inline-size: max-content; }
+
+  .marquee__list {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: 0 var(--space-2);
+    margin: 0;
+    list-style: none;
+    font-family: var(--font-display);
+    font-size: var(--step-sm);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+
+  .marquee__list li { display: flex; align-items: center; gap: var(--space-4); }
+
+  .dot {
+    inline-size: 0.6rem;
+    block-size: 0.6rem;
+    background: var(--brand-red);
+    border-radius: 50%;
+    outline: 1px solid var(--color-on-magenta);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .marquee__track { animation: slide 38s linear infinite; }
+    .marquee:hover .marquee__track { animation-play-state: paused; }
+    @keyframes slide {
+      to { transform: translateX(-50%); }
+    }
+  }
+
+  /* Sin animación, la segunda copia sobra */
+  @media (prefers-reduced-motion: reduce) {
+    .marquee__list[aria-hidden='true'] { display: none; }
+    .marquee { overflow-x: auto; }
+  }
+</style>

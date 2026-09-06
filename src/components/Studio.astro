@@ -1,0 +1,168 @@
+---
+/**
+ * ESTUDIO — Bloques de foto grande + texto, alternando el lado.
+ *
+ * Es la pieza que le da ritmo de landing page a la página: entre dos
+ * secciones densas de tarjetas, un bloque ancho con una imagen deja
+ * respirar. Un archivo en src/content/estudio/ = un bloque.
+ *
+ * Los bloques SIN imagen se descartan, y si no queda ninguno la
+ * sección entera no se pinta. Así los archivos de ejemplo pueden
+ * vivir en el repositorio sin sacar un hueco roto en la página.
+ */
+import { getCollection, render } from 'astro:content';
+import Shape from './Shape.astro';
+import { resolverImagen } from '../lib/imagen';
+
+const entradas = (await getCollection('estudio'))
+  .filter((e) => e.data.imagen.trim() !== '')
+  .sort((a, b) => a.data.orden - b.data.orden);
+
+const bloques = await Promise.all(
+  entradas.map(async (e) => ({ ...e, Body: (await render(e)).Content }))
+);
+
+interface Props {
+  /** Número de sección; lo calcula index.astro según cuáles se pintan */
+  n?: string;
+}
+
+const { n = '01' } = Astro.props;
+---
+
+{
+  bloques.length > 0 && (
+    <section class="section" id="estudio">
+      <div class="wrap">
+        <p class="eyebrow eyebrow--circle">{n} / Estudio</p>
+        <h2>Dónde<br />pasa todo</h2>
+
+        <div class="bloques">
+          {bloques.map((b, i) => (
+            <article
+              class:list={['bloque', 'reveal', { 'bloque--invertido': i % 2 === 1 }]}
+              data-foco
+            >
+              <figure class:list={['bloque__foto', `bloque__foto--${b.data.color}`]}>
+                <img
+                  src={resolverImagen(b.data.imagen)}
+                  alt={b.data.alt}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <Shape
+                  tipo={b.data.figura}
+                  color={b.data.color}
+                  size="min(22vw, 8rem)"
+                  class="bloque__figura"
+                />
+              </figure>
+
+              <div class="bloque__texto">
+                <h3>{b.data.titulo}</h3>
+                <b.Body />
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .bloques {
+    display: grid;
+    gap: var(--space-6);
+    margin-block-start: var(--space-5);
+  }
+
+  .bloque {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+    align-items: center;
+  }
+
+  /* La foto: marco duro y sombra dura, como cualquier otra caja del
+     sitio. En gris por defecto y a color al acercarse, que es el
+     único momento de color de la sección. */
+  .bloque__foto {
+    position: relative;
+    margin: 0;
+    border: var(--border-w) solid var(--brand-ink);
+    box-shadow: var(--shadow-hard);
+    /* La figura decorativa se sale del marco a propósito */
+    overflow: visible;
+  }
+
+  .bloque__foto img {
+    inline-size: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    filter: grayscale(1) contrast(1.05);
+    transition: filter 420ms var(--transition-ease, ease);
+  }
+
+  /* Efectos de realce. Se encienden con el ratón y, en pantallas sin
+     ratón, con la clase .en-foco que pone el scroll (src/scripts/foco.ts):
+     lo que pasa por el centro de la pantalla es lo que está vivo. */
+  .bloque:is(:hover, .en-foco) .bloque__foto img { filter: grayscale(0) contrast(1); }
+  .bloque:is(:hover, .en-foco) :global(.bloque__figura) {
+    transform: rotate(90deg) scale(1.1);
+  }
+
+  /* Figura Bauhaus solapando la esquina inferior izquierda */
+  .bloque :global(.bloque__figura) {
+    position: absolute;
+    /* En estrecho el saliente se queda en --space-2: con --space-3
+       (24 px) se comía el margen de la página (20 px) y la sección,
+       que lleva overflow:hidden, cortaba la figura contra el borde. */
+    inset-block-end: calc(var(--space-2) * -1);
+    inset-inline-start: calc(var(--space-2) * -1);
+    transition: transform 450ms cubic-bezier(0.34, 1.3, 0.64, 1);
+  }
+
+  .bloque__texto h3 {
+    font-size: var(--step-2);
+    margin-block-end: var(--space-2);
+  }
+
+  .bloque__texto :global(p) {
+    color: var(--color-muted);
+    max-width: 46ch;
+  }
+
+  .bloque__texto :global(p + p) { margin-block-start: var(--space-2); }
+
+  @media (width >= 55rem) {
+    .bloque {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      gap: var(--space-5);
+    }
+
+    /* Bloque par: la foto salta a la derecha. Se mueve con order y no
+       reordenando el HTML a propósito: así el orden de lectura es el
+       mismo en todos los bloques (foto, título, texto) y solo cambia
+       el lado visual. Alternar también el HTML haría que un lector de
+       pantalla leyera unos bloques al revés que otros. */
+    .bloque--invertido .bloque__foto { order: 2; }
+
+    /* En el bloque invertido la figura cambia de esquina, o siempre
+       apuntaría hacia fuera de la página. */
+    /* Con sitio de sobra, el saliente vuelve a ser el grande.
+       Esta regla va ANTES que la del bloque invertido a propósito:
+       las dos tienen la misma especificidad, así que si fuera
+       después le devolvería el inset-inline-start y la figura no
+       cambiaría de esquina. */
+    .bloque :global(.bloque__figura) {
+      inset-block-end: calc(var(--space-3) * -1);
+      inset-inline-start: calc(var(--space-3) * -1);
+    }
+
+    .bloque--invertido :global(.bloque__figura) {
+      inset-inline-start: auto;
+      inset-inline-end: calc(var(--space-3) * -1);
+    }
+  }
+</style>

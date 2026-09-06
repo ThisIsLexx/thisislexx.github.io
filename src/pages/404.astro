@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Shape from '../components/Shape.astro';
+---
+
+<BaseLayout title="404 — Página no encontrada">
+  <section class="nf wrap">
+    <div class="nf__art" aria-hidden="true">
+      <Shape tipo="circle" color="red" size="7rem" />
+      <Shape tipo="triangle" color="magenta" size="7rem" />
+      <Shape tipo="square" color="blue" size="7rem" />
+    </div>
+    <h1>404</h1>
+    <p class="lead">Esta pista no existe. Volvamos al máster.</p>
+    <a class="btn" href="/">Ir al inicio</a>
+  </section>
+</BaseLayout>
+
+<style>
+  .nf {
+    min-block-size: 70vh;
+    display: grid;
+    place-content: center;
+    justify-items: start;
+    gap: var(--space-3);
+    padding-block: var(--space-6);
+  }
+  .nf__art { display: flex; gap: var(--space-2); align-items: flex-end; }
+</style>

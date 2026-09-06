@@ -1,0 +1,272 @@
+/* ═══════════════════════════════════════════════════════════════
+   GLOBAL.CSS — Reset, base tipográfica y primitivas de layout.
+   Los colores y medidas SIEMPRE salen de brand.css. Si estás a
+   punto de escribir un HEX aquí, es que falta un token allá.
+   ═══════════════════════════════════════════════════════════════ */
+
+@import '@fontsource-variable/jost';
+@import './brand.css';
+
+/* ── Clash Display (Fontshare, libre para uso comercial) ──────────
+   Autoalojada en /public/fonts: sin peticiones a terceros, sin
+   parpadeo por DNS y sin depender de que el CDN siga en pie.
+   El peso 500 cubre también el 400 para que ningún componente
+   acabe con negrita sintética.                                    */
+@font-face {
+  font-family: 'Clash Display';
+  src: url('/fonts/ClashDisplay-500.woff2') format('woff2');
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Clash Display';
+  src: url('/fonts/ClashDisplay-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Clash Display';
+  src: url('/fonts/ClashDisplay-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── Reset ──────────────────────────────────────────────────── */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+* { margin: 0; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
+}
+
+/* ── Barra de desplazamiento ─────────────────────────────────────
+   Es parte del marco de la página, no del navegador: va en el rojo
+   de marca sobre el papel, y pasa a magenta al agarrarla.
+
+   Hacen falta las dos sintaxis. `scrollbar-color` es el estándar
+   (Firefox, y Chrome desde la 121) y se hereda, así que también tiñe
+   los bloques con scroll propio: el panel del menú, la lista de
+   Spotify. Las reglas ::-webkit-scrollbar cubren Safari y los Chrome
+   anteriores, que ignoran el estándar. Donde valen las dos, gana
+   `scrollbar-color`.                                              */
+html {
+  scrollbar-color: var(--color-accent) var(--brand-paper-dim);
+}
+
+::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+::-webkit-scrollbar-track { background: var(--brand-paper-dim); }
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
+  /* Esquina viva, como todo lo demás. El borde del color de la pista
+     deja un margen alrededor del tirador en vez de redondearlo. */
+  border: 3px solid var(--brand-paper-dim);
+  border-radius: var(--radius);
+}
+
+::-webkit-scrollbar-thumb:hover { background: var(--color-accent-3); }
+
+::-webkit-scrollbar-corner { background: var(--brand-paper-dim); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: var(--leading-body);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+img, svg, video, iframe { display: block; max-width: 100%; }
+img, video { height: auto; }
+input, button, textarea, select { font: inherit; color: inherit; }
+
+/* ── Tipografía ─────────────────────────────────────────────── */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  /* Red de seguridad: ninguna palabra puede salirse de su caja.
+     Funciona porque todas las retículas usan minmax(0, 1fr); con
+     pistas 'auto' la celda crecería en vez de partir la palabra.
+     Tiene que ser 'anywhere' y no 'break-word': solo 'anywhere'
+     cuenta al calcular el ancho mínimo de una celda de grid.     */
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* Titulares de cartel: interlínea cerrada y letra apretada */
+h1, h2 {
+  font-weight: 700;
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  text-wrap: balance;
+}
+
+/* Títulos dentro de tarjetas: viven en columnas estrechas y suelen
+   ocupar dos líneas, así que necesitan aire propio. */
+h3, h4 {
+  font-weight: 600;
+  line-height: var(--leading-card);
+  letter-spacing: var(--tracking-card);
+  text-wrap: pretty;
+}
+
+h1 { font-size: var(--step-4); }
+h2 { font-size: var(--step-3); }
+h3 { font-size: var(--step-1); }
+
+p { text-wrap: pretty; max-width: 62ch; }
+
+a {
+  color: inherit;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+:focus-visible {
+  outline: var(--border-w) solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--color-accent-3);
+  color: var(--color-on-magenta);
+}
+
+/* ── Primitivas de layout ───────────────────────────────────── */
+.wrap {
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.section {
+  padding-block: var(--space-7);
+  border-top: var(--border-w-thick) solid var(--brand-line);
+  position: relative;
+  overflow: hidden; /* contiene las formas decorativas */
+}
+
+/* Etiqueta numerada de sección: "01 / SERVICIOS" */
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-size: var(--step-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  margin-bottom: var(--space-3);
+}
+
+.eyebrow::before {
+  content: '';
+  inline-size: 1.1em;
+  block-size: 1.1em;
+  background: var(--color-accent);
+  flex: none;
+}
+
+.eyebrow--circle::before { border-radius: 50%; background: var(--color-accent-2); }
+.eyebrow--tri::before {
+  background: none;
+  border-inline: 0.55em solid transparent;
+  border-block-end: 1.1em solid var(--color-accent-3);
+  block-size: 0;
+}
+
+.lead {
+  font-size: var(--step-1);
+  max-width: 46ch;
+  color: var(--color-fg);
+}
+
+.muted { color: var(--color-muted); }
+
+/* ── Botones ────────────────────────────────────────────────── */
+.btn {
+  --btn-bg: var(--color-accent);
+  --btn-fg: var(--color-on-accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.85em 1.6em;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  border: var(--border-w) solid var(--brand-ink);
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: var(--step-sm);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--brand-ink);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.btn:hover {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--brand-ink);
+}
+
+.btn--ghost { --btn-bg: transparent; --btn-fg: var(--color-fg); }
+.btn--magenta { --btn-bg: var(--color-accent-3); --btn-fg: var(--color-on-magenta); }
+.btn--blue { --btn-bg: var(--color-accent-2); --btn-fg: var(--color-on-accent); }
+
+/* ── Utilidades ─────────────────────────────────────────────── */
+
+/* Con el menú desplegable abierto, la página de detrás se queda
+   quieta: si no, se hace scroll del fondo y al cerrar apareces en
+   otro sitio sin haber elegido nada. */
+.menu-abierto, .menu-abierto body { overflow: hidden; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Entrada suave al hacer scroll (progressive enhancement) */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: reveal-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 45%;
+    }
+    @keyframes reveal-in {
+      from { opacity: 0; transform: translateY(2rem); }
+      to { opacity: 1; transform: none; }
+    }
+  }
+}

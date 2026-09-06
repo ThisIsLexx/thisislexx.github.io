@@ -1,0 +1,164 @@
+/* ═══════════════════════════════════════════════════════════════
+   BRAND.CSS — Sistema de marca
+   Único archivo que necesitas tocar para cambiar la identidad
+   visual del sitio: colores, tipografías, grosores y ritmo.
+   Paleta: geometría Bauhaus con triada rojo · magenta · azul,
+   sobre neutros de tinta y papel.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── 1. COLORES DE MARCA ─────────────────────────────────────
+     Triada de marca: rojo · magenta · azul. Cambia estos tres
+     HEX y todo el sitio se recolorea (botones, formas, acentos). */
+  --brand-red: #cc1a12;
+  --brand-magenta: #c2186f;
+  --brand-blue: #0b4ea2;
+
+  /* Neutros: "tinta" (casi negro) y "papel" (blanco cálido).
+     El Bauhaus nunca usa negro puro ni blanco puro.             */
+  --brand-ink: #16130f;
+  --brand-paper: #f2efe6;
+
+  /* Neutros FIJOS: no se invierten con el tema. Los usa el texto
+     que va encima de un color de marca, donde el contraste lo
+     manda el color de fondo y no el tema de la página.           */
+  --ink-fixed: #16130f;
+  --paper-fixed: #f2efe6;
+
+  /* La triada en su versión clara, también FIJA. La usan los bloques
+     que siempre tienen fondo oscuro pase lo que pase con el tema,
+     como el hero sobre la fotografía: ahí el rojo oscuro del modo
+     claro se hunde en la foto y hay que subirlo.                   */
+  --red-fixed: #ff4a3d;
+  --magenta-fixed: #ff5cb0;
+  --blue-fixed: #4d8ee6;
+  --ink-soft-fixed: #b3aca0;
+
+  /* Variantes de apoyo (derivadas, rara vez las tocarás) */
+  --brand-ink-soft: #4a443c;
+  --brand-paper-dim: #e4dfd2;
+  --brand-line: var(--brand-ink);
+
+  /* ── 2. ROLES SEMÁNTICOS ─────────────────────────────────────
+     Los componentes usan ESTOS, no los de arriba. Así puedes
+     reasignar qué color cumple qué función sin tocar el CSS.    */
+  --color-bg: var(--brand-paper);
+  --color-fg: var(--brand-ink);
+  --color-muted: var(--brand-ink-soft);
+  --color-accent: var(--brand-red);       /* CTA principal, énfasis */
+  --color-accent-2: var(--brand-blue);    /* Secciones alternas     */
+  --color-accent-3: var(--brand-magenta); /* Destacados, highlight  */
+  --color-on-accent: var(--brand-paper);  /* Texto sobre rojo/azul  */
+  --color-on-magenta: var(--paper-fixed); /* Texto sobre magenta    */
+  --color-focus: var(--brand-blue);
+
+  /* ── 3. TIPOGRAFÍA ───────────────────────────────────────────
+     Clash Display (Fontshare) para titulares: geométrica, de
+     contornos rectos y contrastes marcados. Jost — clon libre de
+     Futura, la geométrica de la Bauhaus — para el texto corrido. */
+  --font-display: 'Clash Display', 'Jost Variable', system-ui, sans-serif;
+  --font-body: 'Jost Variable', system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', monospace;
+
+  --tracking-display: -0.015em; /* Titulares grandes           */
+  --tracking-card: 0.005em;     /* Títulos de tarjeta          */
+  --tracking-label: 0.18em;     /* Etiquetas en mayúsculas     */
+  --leading-display: 0.95;      /* Titulares de cartel         */
+  --leading-card: 1.12;         /* Títulos de dos líneas       */
+  --leading-body: 1.6;
+
+  /* Escala fluida: se adapta al ancho sin media queries */
+  --step-xs: clamp(0.75rem, 0.72rem + 0.15vw, 0.84rem);
+  --step-sm: clamp(0.88rem, 0.84rem + 0.2vw, 1rem);
+  --step-0: clamp(1rem, 0.95rem + 0.25vw, 1.15rem);
+  --step-1: clamp(1.3rem, 1.15rem + 0.7vw, 1.8rem);
+  /* Títulos dentro de tarjetas: van en columnas estrechas, así que
+     necesitan su propio escalón, más contenido que --step-1.      */
+  --step-card: clamp(1.25rem, 1rem + 0.8vw, 1.5rem);
+  --step-2: clamp(1.75rem, 1.4rem + 1.6vw, 2.9rem);
+  --step-3: clamp(2.4rem, 1.6rem + 3.4vw, 4.6rem);
+  --step-4: clamp(3.2rem, 1.4rem + 7.2vw, 8rem);
+
+  /* ── 4. GEOMETRÍA Y RITMO ────────────────────────────────────
+     Bauhaus = esquina viva. El único radio permitido es el 100%
+     de los círculos. Sube --radius si quieres suavizar todo.    */
+  --radius: 0px;
+  --border-w: 3px;         /* Grosor de línea estándar   */
+  --border-w-thick: 6px;   /* Marcos y divisores fuertes */
+  --shadow-hard: 8px 8px 0 var(--brand-ink); /* Sombra dura, sin blur */
+
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2.5rem;
+  --space-5: 4rem;
+  --space-6: 6rem;
+  --space-7: clamp(4rem, 10vw, 9rem);
+
+  /* Separación entre tarjetas (servicios, trabajos, testimonios,
+     pasos del proceso). Súbelo o bájalo aquí y cambia en todo el
+     sitio a la vez: es el respiro visual de la página.            */
+  --gap-cards: clamp(1.5rem, 3vw, 2.75rem);
+
+  /* Fondo de los reproductores embebidos. Coincide con el gris de
+     Spotify y YouTube: si el reproductor no llena el alto que le
+     damos, la franja sobrante se confunde con él en vez de verse
+     como un hueco claro. No se invierte con el tema oscuro porque
+     los reproductores son oscuros en ambos.                       */
+  --embed-bg: #121212;
+
+  --content-max: 78rem;
+  /* Aire a los lados del contenido. El mínimo es el que manda en
+     móvil (por debajo de ~700px el 4vw se queda corto): súbelo y
+     todo el sitio respira más en pantallas pequeñas.              */
+  --gutter: clamp(1.75rem, 4vw, 3.5rem);
+
+  --transition: 180ms cubic-bezier(0.2, 0, 0.1, 1);
+  /* Para los realces grandes (Proceso, Sesiones): con el foco por
+     scroll del móvil, 180ms se siente como un parpadeo — el cambio
+     tiene que acompañar al dedo, no adelantarse.                  */
+  --transition-lento: 620ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+
+/* ── 5. MODO OSCURO ────────────────────────────────────────────
+   Se invierten tinta y papel; los primarios se aclaran un punto
+   para mantener contraste AA sobre fondo oscuro.                */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --brand-ink: #f2efe6;
+    --brand-paper: #14120f;
+    --brand-ink-soft: #a8a196;
+    --brand-paper-dim: #221e18;
+    --brand-red: #ff4a3d;
+    --brand-magenta: #ff5cb0;
+    --brand-blue: #4d8ee6;
+    --color-on-accent: #14120f;
+    --color-on-magenta: var(--ink-fixed);
+    --shadow-hard: 8px 8px 0 var(--brand-ink);
+  }
+}
+
+/* Interruptor manual (data-theme en <html>) gana sobre el sistema */
+:root[data-theme='dark'] {
+  --brand-ink: #f2efe6;
+  --brand-paper: #14120f;
+  --brand-ink-soft: #a8a196;
+  --brand-paper-dim: #221e18;
+  --brand-red: #ff4a3d;
+  --brand-magenta: #ff5cb0;
+  --brand-blue: #4d8ee6;
+  --color-on-accent: #14120f;
+  --color-on-magenta: var(--ink-fixed);
+}
+
+:root[data-theme='light'] {
+  --brand-ink: #16130f;
+  --brand-paper: #f2efe6;
+  --brand-ink-soft: #4a443c;
+  --brand-paper-dim: #e4dfd2;
+  --brand-red: #cc1a12;
+  --brand-magenta: #c2186f;
+  --brand-blue: #0b4ea2;
+  --color-on-accent: #f2efe6;
+  --color-on-magenta: var(--paper-fixed);
+}

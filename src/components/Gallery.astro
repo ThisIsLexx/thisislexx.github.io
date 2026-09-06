@@ -1,0 +1,158 @@
+---
+/**
+ * SESIONES — Retícula de fotos de estudio.
+ *
+ * Tratamiento Bauhaus: gris por defecto, y al pasar el ratón la foto
+ * recupera el color bajo una veladura magenta. Marco duro, esquina
+ * viva y sombra dura, igual que el resto de cajas del sitio.
+ *
+ * Cada hueco tiene una proporción fija y la foto se recorta para
+ * llenarlo (`object-fit: cover`). El campo `formato` del .md elige
+ * cuál, porque una foto vertical metida en un hueco apaisado pierde
+ * la cabeza y los pies.
+ *
+ * Las fotos SIN imagen se descartan y, si no queda ninguna, la
+ * sección no se pinta.
+ */
+import { getCollection } from 'astro:content';
+import { resolverImagen } from '../lib/imagen';
+
+/** Proporción del hueco según el campo `formato` del .md */
+const RATIOS = {
+  apaisado: '4 / 3',
+  vertical: '3 / 4',
+  cuadrado: '1 / 1',
+  original: 'auto',
+} as const;
+
+const fotos = (await getCollection('galeria'))
+  .filter((f) => f.data.imagen.trim() !== '')
+  .sort((a, b) => a.data.orden - b.data.orden);
+
+interface Props {
+  /** Número de sección; lo calcula index.astro según cuáles se pintan */
+  n?: string;
+}
+
+const { n = '04' } = Astro.props;
+---
+
+{
+  fotos.length > 0 && (
+    <section class="section" id="sesiones">
+      <div class="wrap">
+        <p class="eyebrow eyebrow--tri">{n} / Sesiones</p>
+        <h2>El estudio<br />por dentro</h2>
+
+        <ul class="galeria" role="list">
+          {fotos.map((f) => (
+            <li
+              class:list={['foto', 'reveal', { 'foto--ancha': f.data.ancha }]}
+              style={`--foto-ratio: ${RATIOS[f.data.formato]}`}
+              data-foco
+            >
+              <img
+                src={resolverImagen(f.data.imagen)}
+                alt={f.data.alt}
+                loading="lazy"
+                decoding="async"
+              />
+              {f.data.titulo && <p class="foto__pie">{f.data.titulo}</p>}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .galeria {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--gap-cards);
+    /* Sin esto, una foto baja estira a sus vecinas de fila y les deja
+       una franja de fondo debajo del marco. */
+    align-items: start;
+    margin-block-start: var(--space-5);
+    padding: 0;
+    list-style: none;
+  }
+
+  .foto {
+    position: relative;
+    border: var(--border-w) solid var(--brand-ink);
+    overflow: hidden;
+    transition:
+      transform var(--transition-lento),
+      box-shadow var(--transition-lento);
+  }
+
+  .foto img {
+    display: block;
+    inline-size: 100%;
+    aspect-ratio: var(--foto-ratio, 4 / 3);
+    object-fit: cover;
+    filter: grayscale(1) contrast(1.05);
+    transition: filter 900ms ease, transform 1100ms cubic-bezier(0.2, 0, 0.1, 1);
+  }
+
+  /* Veladura de color: un bloque magenta en modo multiply que se
+     retira al pasar el ratón. Es el mismo recurso que la banda de
+     referencias, aplicado a la foto. */
+  .foto::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--brand-magenta);
+    mix-blend-mode: multiply;
+    opacity: 0.55;
+    pointer-events: none;
+    transition: opacity 900ms ease;
+  }
+
+  /* Efectos de realce. Se encienden con el ratón y, en pantallas sin
+     ratón, con la clase .en-foco que pone el scroll (src/scripts/foco.ts):
+     lo que pasa por el centro de la pantalla es lo que está vivo. */
+  .foto:is(:hover, .en-foco) {
+    transform: translate(-5px, -5px);
+    box-shadow: var(--shadow-hard);
+    z-index: 1;
+  }
+  .foto:is(:hover, .en-foco) img { filter: grayscale(0) contrast(1); transform: scale(1.04); }
+  .foto:is(:hover, .en-foco)::after { opacity: 0; }
+  .foto:is(:hover, .en-foco) .foto__pie { transform: none; }
+
+  /* Pie que sube desde abajo. Sin :hover (táctil) se queda visible,
+     que es el comportamiento correcto: la información no puede
+     depender de un puntero que no existe. */
+  .foto__pie {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    margin: 0;
+    padding: var(--space-2);
+    background: var(--brand-ink);
+    color: var(--brand-paper);
+    font-size: var(--step-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    max-width: none;
+  }
+
+  @media (hover: hover) {
+    .foto__pie {
+      transform: translateY(100%);
+      transition: transform var(--transition-lento);
+    }
+  }
+
+  @media (width >= 42rem) {
+    .galeria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (width >= 62rem) {
+    .galeria { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .foto--ancha { grid-column: span 2; }
+  }
+</style>

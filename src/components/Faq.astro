@@ -1,0 +1,93 @@
+---
+import { getCollection, render } from 'astro:content';
+
+const entries = (await getCollection('faq')).sort((a, b) => a.data.orden - b.data.orden);
+const items = await Promise.all(
+  entries.map(async (e) => ({ ...e, Body: (await render(e)).Content }))
+);
+
+interface Props {
+  /** Número de sección; lo calcula index.astro según cuáles se pintan */
+  n?: string;
+}
+
+const { n = '07' } = Astro.props;
+---
+
+<section class="section" id="faq">
+  <div class="wrap faq__grid">
+    <div>
+      <p class="eyebrow eyebrow--circle">{n} / Dudas</p>
+      <h2>Preguntas<br />frecuentes</h2>
+    </div>
+
+    <div class="faq__list">
+      {
+        items.map(({ data, Body }) => (
+          <details class="qa" name="faq">
+            <summary>
+              <span>{data.pregunta}</span>
+              <span class="qa__icon" aria-hidden="true"></span>
+            </summary>
+            <div class="qa__body"><Body /></div>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .faq__grid { display: grid; gap: var(--space-5); align-items: start; }
+
+  .faq__list { border-block-start: var(--border-w) solid var(--brand-ink); }
+
+  .qa { border-block-end: var(--border-w) solid var(--brand-ink); }
+
+  .qa summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-block: var(--space-3);
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: var(--step-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    list-style: none;
+  }
+
+  .qa summary::-webkit-details-marker { display: none; }
+
+  .qa summary span:first-child { transition: transform var(--transition); }
+
+  /* La FAQ se queda fuera del foco por scroll (data-foco): aquí la
+     interacción ya la pone el usuario al abrir y cerrar preguntas, y
+     un realce automático al pasar por delante solo despista sobre
+     cuál está abierta. Con ratón sí, que ahí el hover es intencionado. */
+  @media (hover: hover) {
+    .qa:hover { background: var(--brand-paper-dim); }
+    .qa:hover summary span:first-child { transform: translateX(0.6rem); }
+    .qa:hover .qa__icon { transform: rotate(45deg); }
+    .qa[open]:hover .qa__icon { transform: rotate(135deg); }
+  }
+
+  /* Cuadrado que gira 45° al abrir: el indicador más simple posible */
+  .qa__icon {
+    flex: none;
+    inline-size: 1rem;
+    block-size: 1rem;
+    background: var(--brand-red);
+    transition: transform var(--transition), background-color var(--transition);
+  }
+
+  .qa[open] .qa__icon { transform: rotate(45deg); background: var(--brand-blue); }
+
+  .qa__body { padding-block-end: var(--space-3); }
+  .qa__body :global(p) { font-size: var(--step-sm); color: var(--color-muted); }
+
+  @media (width >= 55rem) {
+    .faq__grid { grid-template-columns: 0.8fr 1.2fr; gap: var(--space-6); }
+  }
+</style>

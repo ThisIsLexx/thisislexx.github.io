@@ -1,0 +1,185 @@
+---
+/**
+ * Composición del hero: tornamesa + ecualizador.
+ * Todo es CSS (círculos, barras y degradados radiales): sin imágenes,
+ * escala sin perder nitidez y pesa cero.
+ * Las barras del ecualizador se animan con alturas y retardos distintos
+ * para que no se vea un patrón repetido.
+ */
+const barras = [
+  { h: 38, d: 0 },
+  { h: 72, d: 0.35 },
+  { h: 54, d: 0.15 },
+  { h: 92, d: 0.5 },
+  { h: 64, d: 0.25 },
+  { h: 100, d: 0.65 },
+  { h: 46, d: 0.4 },
+  { h: 78, d: 0.1 },
+  { h: 58, d: 0.55 },
+];
+---
+
+<div class="art" aria-hidden="true">
+  <div class="tocadiscos">
+    <div class="disco">
+      <span class="disco__brillo"></span>
+    </div>
+
+    <div class="brazo">
+      <span class="brazo__pivote"></span>
+      <span class="brazo__tubo"></span>
+    </div>
+  </div>
+
+  <ul class="eq" role="list">
+    {
+      barras.map((b, i) => (
+        <li
+          class:list={['eq__b', 'eq__b--' + (i % 3)]}
+          style={'--h:' + b.h + '%;--d:' + b.d + 's'}
+        />
+      ))
+    }
+  </ul>
+</div>
+
+<style>
+  .art {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    gap: var(--space-3);
+  }
+
+  /* ── Tornamesa ─────────────────────────────────────────────── */
+  .tocadiscos {
+    position: relative;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    padding: 8%;
+  }
+
+  .disco {
+    position: relative;
+    inline-size: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: var(--border-w) solid var(--brand-ink);
+    /* De arriba abajo: agujero · etiqueta · surcos */
+    background:
+      radial-gradient(circle at 50% 50%, var(--brand-paper) 0 2.2%, transparent 2.3%),
+      /* Aro de tinta: solo el borde de la etiqueta. Si se pinta
+         macizo de 0 a 27.4% tapa el magenta que va debajo. */
+      radial-gradient(circle at 50% 50%, transparent 0 27%, var(--ink-fixed) 27.05% 27.4%, transparent 27.5%),
+      radial-gradient(circle at 50% 50%, var(--brand-magenta) 0 27%, transparent 27.1%),
+      repeating-radial-gradient(
+        circle at 50% 50%,
+        #23201c 0 1px,
+        var(--ink-fixed) 1px 7px
+      );
+    box-shadow: var(--shadow-hard);
+  }
+
+  /* Reflejo que gira: sin él, un disco radial no parecería moverse */
+  .disco__brillo {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0 16%,
+      rgb(255 255 255 / 0.14) 22%,
+      transparent 28% 66%,
+      rgb(255 255 255 / 0.09) 72%,
+      transparent 78%
+    );
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .disco__brillo { animation: girar 6s linear infinite; }
+    @keyframes girar {
+      to { transform: rotate(1turn); }
+    }
+  }
+
+  /* ── Brazo ─────────────────────────────────────────────────── */
+  .brazo {
+    position: absolute;
+    inset-block-start: 4%;
+    inset-inline-end: 6%;
+    inline-size: 46%;
+    aspect-ratio: 1;
+  }
+
+  .brazo__pivote {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    inline-size: 22%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--brand-blue);
+    border: var(--border-w) solid var(--brand-ink);
+  }
+
+  .brazo__tubo {
+    position: absolute;
+    inset-block-start: 11%;
+    inset-inline-end: 11%;
+    inline-size: var(--border-w);
+    block-size: 78%;
+    background: var(--brand-ink);
+    transform-origin: top center;
+    transform: rotate(28deg);
+    transition: transform 600ms cubic-bezier(0.34, 1.3, 0.64, 1);
+  }
+
+  /* La aguja: cuadrito rojo en la punta del brazo */
+  .brazo__tubo::after {
+    content: '';
+    position: absolute;
+    inset-block-end: -6px;
+    inset-inline-start: 50%;
+    translate: -50% 0;
+    inline-size: 14px;
+    block-size: 14px;
+    background: var(--brand-red);
+    border: 2px solid var(--brand-ink);
+  }
+
+  /* El brazo se levanta al pasar el cursor por el hero */
+  .art:hover .brazo__tubo { transform: rotate(14deg); }
+
+  /* ── Ecualizador ───────────────────────────────────────────── */
+  .eq {
+    display: flex;
+    align-items: flex-end;
+    gap: 3%;
+    block-size: clamp(3.5rem, 9vw, 6rem);
+    margin: 0;
+    padding: 0 0 var(--space-1);
+    list-style: none;
+    border-block-end: var(--border-w) solid var(--brand-ink);
+  }
+
+  .eq__b {
+    flex: 1;
+    block-size: var(--h);
+    background: var(--c);
+    transform-origin: bottom;
+  }
+
+  .eq__b--0 { --c: var(--brand-red); }
+  .eq__b--1 { --c: var(--brand-magenta); }
+  .eq__b--2 { --c: var(--brand-blue); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .eq__b {
+      animation: pulso 1.6s var(--d) ease-in-out infinite alternate;
+    }
+    @keyframes pulso {
+      from { transform: scaleY(0.35); }
+      to { transform: scaleY(1); }
+    }
+  }
+</style>

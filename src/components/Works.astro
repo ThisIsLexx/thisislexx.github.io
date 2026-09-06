@@ -1,0 +1,162 @@
+---
+import { getCollection } from 'astro:content';
+import Embed from './Embed.astro';
+import { resolverImagen } from '../lib/imagen';
+
+const trabajos = (await getCollection('trabajos'))
+  .sort((a, b) => a.data.orden - b.data.orden)
+  .map((t) => ({
+    ...t,
+    // 'genero' admite texto o lista; aquí siempre queda como lista
+    generos: Array.isArray(t.data.genero) ? t.data.genero : [t.data.genero],
+  }));
+
+interface Props {
+  /** Número de sección; lo calcula index.astro según cuáles se pintan */
+  n?: string;
+}
+
+const { n = '03' } = Astro.props;
+---
+
+<section class="section section--alt" id="trabajos">
+  <div class="wrap">
+    <p class="eyebrow eyebrow--circle">{n} / Trabajos</p>
+    <h2>Discografía<br />seleccionada</h2>
+
+    <div class="works">
+      {
+        trabajos.map((t, i) => (
+          <article class:list={['work', 'reveal', { 'work--wide': t.data.destacado }]} data-foco>
+            <header class="work__head">
+              <span class="work__idx">{String(i + 1).padStart(2, '0')}</span>
+              <div>
+                <h3>{t.data.titulo}</h3>
+                <p class="work__artist">{t.data.artista}</p>
+              </div>
+            </header>
+
+            {t.data.portada && (
+              <figure class="work__portada">
+                <img
+                  src={resolverImagen(t.data.portada, 1000)}
+                  alt={t.data.portadaAlt ?? ''}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </figure>
+            )}
+
+            <Embed
+              plataforma={t.data.plataforma}
+              embedId={t.data.embedId}
+              reproductor={t.data.reproductor}
+              titulo={`${t.data.titulo} — ${t.data.artista}`}
+            />
+
+            <ul class="tags" role="list">
+              <li class="tag tag--year">{t.data.anio}</li>
+              {t.generos.map((g) => <li class="tag">{g}</li>)}
+              {t.data.roles.map((r) => <li class="tag tag--role">{r}</li>)}
+            </ul>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .section--alt { background: var(--brand-paper-dim); }
+
+  .works {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: calc(var(--gap-cards) * 1.8) var(--gap-cards);
+    margin-block-start: var(--space-5);
+  }
+
+  /* Contenido pegado arriba y no estirado: un vídeo 16:9 y un álbum
+     de Spotify miden distinto, y si se empujan las etiquetas al fondo
+     queda un vacío en mitad de la tarjeta más corta. Así el sobrante
+     cae al final, donde apenas se percibe. */
+  .work { display: grid; gap: var(--space-2); align-content: start; }
+
+  .work__idx,
+  .work :global(.embed),
+  .work__head { transition: all var(--transition); }
+
+  /* El reproductor NO se mueve al hacer hover: solo gana sombra dura.
+     Desplazarlo haría fallar el clic en play. */
+  /* Efectos de realce. Se encienden con el ratón y, en pantallas sin
+     ratón, con la clase .en-foco que pone el scroll (src/scripts/foco.ts):
+     lo que pasa por el centro de la pantalla es lo que está vivo. */
+  .work:is(:hover, .en-foco) .work__idx { color: var(--color-accent-3); transform: scale(1.12); }
+  .work:is(:hover, .en-foco) .work__head { border-block-end-color: var(--color-accent-3); }
+  .work:is(:hover, .en-foco) :global(.embed) { box-shadow: 6px 6px 0 var(--color-accent-3); }
+  .work:is(:hover, .en-foco) .tag--year { background: var(--color-accent-3); color: var(--color-on-magenta); }
+
+  .work__idx { transform-origin: left bottom; }
+  .tag--year { transition: background-color var(--transition), color var(--transition); }
+
+  .work__head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    border-block-end: var(--border-w) solid var(--brand-ink);
+    padding-block-end: var(--space-2);
+  }
+
+  .work__idx {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    color: var(--color-accent);
+    line-height: 1;
+  }
+
+  .work__artist {
+    font-size: var(--step-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  /* Carátula: cuadrada, en gris, y a color al pasar el ratón. Solo
+     aparece si el trabajo trae el campo 'portada'. */
+  .work__portada {
+    margin: 0;
+    border: var(--border-w) solid var(--brand-ink);
+    overflow: hidden;
+  }
+
+  .work__portada img {
+    inline-size: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    filter: grayscale(1) contrast(1.05);
+    transition: filter 420ms ease, transform 620ms cubic-bezier(0.2, 0, 0.1, 1);
+  }
+
+  .work:is(:hover, .en-foco) .work__portada img {
+    filter: grayscale(0) contrast(1);
+    transform: scale(1.04);
+  }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0; list-style: none; }
+
+  .tag {
+    font-size: var(--step-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.3em 0.7em;
+    border: 2px solid var(--brand-ink);
+  }
+
+  .tag--year { background: var(--brand-ink); color: var(--brand-paper); }
+  .tag--role { background: var(--brand-magenta); color: var(--color-on-magenta); }
+
+  @media (width >= 55rem) {
+    .works { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .work--wide { grid-column: 1 / -1; }
+  }
+</style>

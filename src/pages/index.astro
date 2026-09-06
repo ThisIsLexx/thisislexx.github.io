@@ -1,0 +1,61 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import Marquee from '../components/Marquee.astro';
+import Studio from '../components/Studio.astro';
+import Services from '../components/Services.astro';
+import Works from '../components/Works.astro';
+import Gallery from '../components/Gallery.astro';
+import Process from '../components/Process.astro';
+import Testimonials from '../components/Testimonials.astro';
+import Faq from '../components/Faq.astro';
+import Contact from '../components/Contact.astro';
+
+/* ─────────────────────────────────────────────────────────────
+   NUMERACIÓN DE SECCIONES
+   Estudio y Sesiones solo aparecen cuando su colección trae
+   alguna imagen. Si el número fuera fijo en cada componente, con
+   esas dos vacías la página iría "02, 03, 05…" y parecería un
+   error. Aquí se cuentan solo las que de verdad se van a pintar y
+   el número baja como prop.
+
+   ¿Añades una sección nueva? Métela en este array en su sitio y
+   ya está: no hay que renumerar nada a mano.
+   ───────────────────────────────────────────────────────────── */
+const conImagen = async (nombre: 'estudio' | 'galeria') =>
+  (await getCollection(nombre)).some((e) => e.data.imagen.trim() !== '');
+
+const visible = {
+  estudio: await conImagen('estudio'),
+  sesiones: await conImagen('galeria'),
+};
+
+const orden = [
+  visible.estudio && 'estudio',
+  'servicios',
+  'trabajos',
+  visible.sesiones && 'sesiones',
+  'proceso',
+  'testimonios',
+  'faq',
+  'contacto',
+].filter((id): id is string => Boolean(id));
+
+const n = Object.fromEntries(
+  orden.map((id, i) => [id, String(i + 1).padStart(2, '0')])
+);
+---
+
+<BaseLayout>
+  <Hero />
+  <Marquee />
+  <Studio n={n.estudio} />
+  <Services n={n.servicios} />
+  <Works n={n.trabajos} />
+  <Gallery n={n.sesiones} />
+  <Process n={n.proceso} />
+  <Testimonials n={n.testimonios} />
+  <Faq n={n.faq} />
+  <Contact n={n.contacto} />
+</BaseLayout>
