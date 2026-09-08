@@ -117,7 +117,7 @@
   /* Para los realces grandes (Proceso, Sesiones): con el foco por
      scroll del móvil, 180ms se siente como un parpadeo — el cambio
      tiene que acompañar al dedo, no adelantarse.                  */
-  --transition-lento: 620ms cubic-bezier(0.2, 0, 0.1, 1);
+  --transition-lento: 280ms cubic-bezier(0.2, 0, 0.1, 1);
 }
 
 /* ── 5. MODO OSCURO ────────────────────────────────────────────

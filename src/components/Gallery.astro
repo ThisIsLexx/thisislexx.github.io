@@ -41,13 +41,13 @@ const { n = '04' } = Astro.props;
   fotos.length > 0 && (
     <section class="section" id="sesiones">
       <div class="wrap">
-        <p class="eyebrow eyebrow--tri">{n} / Sesiones</p>
-        <h2>El estudio<br />por dentro</h2>
+        <p class="eyebrow eyebrow--tri reveal">{n} / Sesiones</p>
+        <h2 class="reveal">El estudio<br />por dentro</h2>
 
         <ul class="galeria" role="list">
           {fotos.map((f) => (
             <li
-              class:list={['foto', 'reveal', { 'foto--ancha': f.data.ancha }]}
+              class:list={['foto', 'reveal', 'reveal--zoom', { 'foto--ancha': f.data.ancha }]}
               style={`--foto-ratio: ${RATIOS[f.data.formato]}`}
               data-foco
             >
@@ -94,7 +94,7 @@ const { n = '04' } = Astro.props;
     aspect-ratio: var(--foto-ratio, 4 / 3);
     object-fit: cover;
     filter: grayscale(1) contrast(1.05);
-    transition: filter 900ms ease, transform 1100ms cubic-bezier(0.2, 0, 0.1, 1);
+    transition: filter 380ms ease, transform 450ms cubic-bezier(0.2, 0, 0.1, 1);
   }
 
   /* Veladura de color: un bloque magenta en modo multiply que se
@@ -108,7 +108,7 @@ const { n = '04' } = Astro.props;
     mix-blend-mode: multiply;
     opacity: 0.55;
     pointer-events: none;
-    transition: opacity 900ms ease;
+    transition: opacity 380ms ease;
   }
 
   /* Efectos de realce. Se encienden con el ratón y, en pantallas sin

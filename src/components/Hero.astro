@@ -24,7 +24,8 @@ const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
   class:list={['hero', { 'hero--con-foto': foto !== '' }]}
   style={`--hero-encuadre: ${HERO.encuadre};
           --hero-oscurecer: ${HERO.oscurecer};
-          --hero-vineta: ${HERO.vineta};`}
+          --hero-vineta: ${HERO.vineta};
+          --hero-saturacion: ${HERO.saturacion};`}
 >
   {
     foto !== '' && (
@@ -43,22 +44,26 @@ const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
 
   <div class="hero__grid wrap">
     <div class="hero__text">
-      <p class="eyebrow">{SITE.role} · {SITE.city}</p>
-      <h1>
-        Tu canción<br />
-        <span class="hl">merece</span><br />
-        sonar bien
+      <p class="eyebrow reveal" style="--retardo: 40ms">{SITE.role} · {SITE.city}</p>
+      {/* Una línea por renglón, cada una dentro de su propia ventana
+          recortada: así el texto sube desde debajo del renglón en vez
+          de aparecer sin más. Los <br> ya fijaban estos tres cortes,
+          así que la composición no cambia. */}
+      <h1 class="hero__titular">
+        <span class="hero__linea" style="--d: 110ms"><span>Tu canción</span></span>
+        <span class="hero__linea" style="--d: 190ms"><span class="hl">merece</span></span>
+        <span class="hero__linea" style="--d: 270ms"><span>sonar bien</span></span>
       </h1>
-      <p class="lead">
+      <p class="lead reveal" style="--retardo: 430ms">
         Asesorías, producciones y mezcla para artistas independientes.
         Proceso claro, fechas que se cumplen y un máster listo para
         subir el mismo día que lo apruebas.
       </p>
-      <div class="hero__cta">
+      <div class="hero__cta reveal" style="--retardo: 500ms">
         <a class="btn" href={waHref} target="_blank" rel="noopener">WhatsApp</a>
         <a class="btn btn--ghost" href={mailHref}>Escribir correo</a>
       </div>
-      <p class="hero__meta muted">
+      <p class="hero__meta muted reveal" style="--retardo: 570ms">
         Respuesta en menos de 48 h · {CONTACT.email}
       </p>
     </div>
@@ -86,13 +91,21 @@ const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
     const DENSIDAD = 1 / 38000;
     const MAX = 46;
     /** Radio de la figura, en píxeles CSS: de la más chica a la más grande */
-    const TAM = [5, 17];
+    const TAM = [2.5, 8];
     /** Opacidad de las figuras. Es un fondo: si se lee, estorba. */
-    const ALFA = 0.17;
+    const ALFA = 0.1;
     /** Radio de influencia del puntero, en píxeles CSS */
     const ALCANCE = 150;
     /** Distancia a la que dos figuras se unen con un hilo */
-    const HILO = 150;
+    const HILO = 110;
+    /** Su cuadrado, para comparar distancias sin sacar raíces */
+    const HILO_2 = HILO * HILO;
+
+    /** Cuadros por segundo del campo. Es un fondo que se arrastra a
+        0.22 px por cuadro: a 30 se ve igual que a 60 y cuesta la mitad
+        de hilo principal, que es el que también atiende al scroll. */
+    const FPS = 30;
+    const MS_CUADRO = 1000 / FPS;
 
     /** El vocabulario de formas del sitio, el mismo de Shape.astro */
     const FIGURAS = ['circulo', 'medio', 'cuarto', 'triangulo', 'cuadrado'] as const;
@@ -198,22 +211,36 @@ const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
       ctx.strokeStyle = blanco;
 
       // Hilos entre figuras cercanas. Van primero, para quedar debajo.
+      //
+      // Esto compara todas las figuras contra todas, así que es lo más
+      // caro del cuadro. Dos atajos, porque se ejecuta constantemente:
+      // se descartan los pares lejanos mirando un solo eje —que es la
+      // mayoría de ellos— y se compara la distancia AL CUADRADO. La
+      // raíz solo se calcula para los pares que de verdad se unen, que
+      // son un puñado.
       ctx.lineWidth = 1;
       for (let i = 0; i < puntos.length; i++) {
+        const a = puntos[i];
         for (let j = i + 1; j < puntos.length; j++) {
-          const dx = puntos[i].x - puntos[j].x;
-          const dy = puntos[i].y - puntos[j].y;
-          const d = Math.hypot(dx, dy);
-          if (d > HILO) continue;
-          ctx.globalAlpha = (1 - d / HILO) * ALFA * 0.4;
+          const b = puntos[j];
+
+          const dx = a.x - b.x;
+          if (dx > HILO || dx < -HILO) continue;
+          const dy = a.y - b.y;
+          if (dy > HILO || dy < -HILO) continue;
+
+          const d2 = dx * dx + dy * dy;
+          if (d2 > HILO_2) continue;
+
+          ctx.globalAlpha = (1 - Math.sqrt(d2) / HILO) * ALFA * 0.4;
           ctx.beginPath();
-          ctx.moveTo(puntos[i].x, puntos[i].y);
-          ctx.lineTo(puntos[j].x, puntos[j].y);
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
           ctx.stroke();
         }
       }
 
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1;
       for (const p of puntos) {
         ctx.globalAlpha = ALFA;
         ctx.save();
@@ -226,24 +253,29 @@ const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
       ctx.globalAlpha = 1;
     }
 
-    function mover() {
+    /** @param paso Cuánto avanzar, en cuadros de 60 Hz equivalentes */
+    function mover(paso) {
       for (const p of puntos) {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.giro += p.vgiro;
+        p.x += p.vx * paso;
+        p.y += p.vy * paso;
+        p.giro += p.vgiro * paso;
 
         // Rebote en los bordes: el campo no se vacía nunca
         if (p.x < 0 || p.x > w) p.vx *= -1;
         if (p.y < 0 || p.y > h) p.vy *= -1;
 
-        // Empuje del puntero: cuanto más cerca, más se aparta
+        // Empuje del puntero: cuanto más cerca, más se aparta.
+        // Se descarta por ejes antes de la raíz: con el ratón quieto en
+        // una esquina, casi ninguna figura está a tiro.
         const dx = p.x - raton.x;
         const dy = p.y - raton.y;
-        const d = Math.hypot(dx, dy);
-        if (d < ALCANCE && d > 0.01) {
-          const fuerza = (1 - d / ALCANCE) * 0.9;
-          p.x += (dx / d) * fuerza;
-          p.y += (dy / d) * fuerza;
+        if (dx < ALCANCE && dx > -ALCANCE && dy < ALCANCE && dy > -ALCANCE) {
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d < ALCANCE && d > 0.01) {
+            const fuerza = (1 - d / ALCANCE) * 0.9 * paso;
+            p.x += (dx / d) * fuerza;
+            p.y += (dy / d) * fuerza;
+          }
         }
 
         // Un punto empujado fuera se recoloca dentro
@@ -252,14 +284,26 @@ const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
       }
     }
 
-    function bucle() {
-      mover();
-      pintar();
+    let ultimo = 0;
+
+    function bucle(t) {
       raf = requestAnimationFrame(bucle);
+
+      const dt = t - ultimo;
+      if (dt < MS_CUADRO) return; // aún no toca cuadro
+      ultimo = t;
+
+      // El avance va por tiempo y no por cuadro: así el campo se
+      // arrastra a la misma velocidad en una pantalla de 60 Hz y en
+      // una de 120. El tope de 3 evita el salto al volver de una
+      // pestaña en segundo plano, donde dt puede ser de segundos.
+      mover(Math.min(dt / 16.667, 3));
+      pintar();
     }
 
     function arrancar() {
       if (raf || !visible || quieto.matches) return;
+      ultimo = performance.now();
       raf = requestAnimationFrame(bucle);
     }
 
@@ -323,7 +367,14 @@ const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
      pantalla o deja de serlo. Por eso aquí el titular se topa antes
      que en el resto del sitio y el aire de arriba y abajo se recorta. */
   .hero--con-foto { padding-block: clamp(2.5rem, 5vw, 4.5rem); }
-  .hero--con-foto h1 { font-size: min(var(--step-4), 5.5rem); }
+
+  /* El tope en vw es lo que mantiene los tres renglones.
+     La escala general (--step-4) no baja de 3.2rem, y a ese tamaño
+     "Tu canción" pide unos 330px mientras que en un móvil de 375
+     solo hay 319 de ancho útil: el renglón se partía en dos y el
+     titular pasaba a cuatro líneas. Con 12vw el más largo entra de
+     sobra hasta en pantallas de 320px. */
+  .hero--con-foto h1 { font-size: min(var(--step-4), 5.5rem, 12vw); }
 
   /* ── Isla oscura ───────────────────────────────────────────────
      Con foto de fondo, el hero es oscuro en los dos temas. Los roles
@@ -363,6 +414,9 @@ const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
     block-size: 100%;
     object-fit: cover;
     object-position: var(--hero-encuadre, center);
+    /* Baja el color de la foto sin tocar su brillo: el velo ya se
+       encarga de oscurecer, y bajar los dos a la vez la apaga. */
+    filter: saturate(var(--hero-saturacion, 1));
   }
 
   /* La viñeta son tres capas: el oscurecido plano que baja el brillo
@@ -374,9 +428,10 @@ const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
     z-index: 1;
     background:
       radial-gradient(
-        ellipse 95% 80% at 50% 45%,
+        ellipse 88% 74% at 50% 45%,
         transparent 0%,
-        rgb(0 0 0 / calc(var(--hero-vineta, 0.9) * 0.9)) 100%
+        rgb(0 0 0 / calc(var(--hero-vineta, 0.9) * 0.42)) 52%,
+        rgb(0 0 0 / var(--hero-vineta, 0.9)) 100%
       ),
       linear-gradient(to top, rgb(0 0 0 / 0.75), transparent 60%),
       rgb(0 0 0 / var(--hero-oscurecer, 0.5));
@@ -400,6 +455,46 @@ const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
   }
 
   .hero__text { max-inline-size: 42rem; }
+
+  /* ── Titular por líneas ────────────────────────────────────────
+     Cada renglón es una ventana con overflow oculto y el texto vive
+     dentro. El padding de abajo, devuelto con margen negativo, es
+     para que el recorte no muerda los rasgos que bajan de la línea
+     base ni el fondo del resaltado: con interlínea 0.95 la caja va
+     más justa que la letra.                                       */
+  .hero__linea {
+    display: block;
+    overflow: hidden;
+    padding-block-end: 0.09em;
+    margin-block-end: -0.09em;
+  }
+
+  .hero__linea > span { display: inline-block; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* `:global(.js)` y no `.js`: la clase vive en <html>, fuera de
+       este componente, y Astro le añadiría su identificador de ámbito
+       al selector — con lo que no encajaría con nada. */
+    :global(.js) .hero__linea > span {
+      /* El desplazamiento vive en el fotograma inicial, NO aquí, y se
+         rellena con `backwards` en lugar de `forwards`. Escrito al
+         revés —el titular bajado en la regla y subido por la
+         animación— basta con que la animación no llegue a ejecutarse
+         para que el titular de la página se quede fuera de su ventana
+         recortada, es decir invisible. El reposo tiene que ser el
+         estado legible. */
+      animation: subir-linea 780ms cubic-bezier(0.16, 1, 0.3, 1) var(--d, 0ms) backwards;
+    }
+
+    @keyframes subir-linea {
+      from { translate: 0 115%; }
+      to { translate: 0 0; }
+    }
+
+    /* Y si el script decide que el movimiento no funciona (ver la red
+       de seguridad de revelar.ts), el titular deja de esperar. */
+    :global(.sin-movimiento) .hero__linea > span { animation: none; }
+  }
 
   .hl {
     background: var(--color-accent-3);

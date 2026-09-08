@@ -1,5 +1,19 @@
 ---
+/**
+ * CONTACTO — Los dos caminos para escribir (WhatsApp y correo) y,
+ * al lado, un retrato.
+ *
+ * El retrato es opcional: sale de CONTACT.retrato, en src/config.ts.
+ * Mientras esté vacío —o mientras no exista el archivo— la columna
+ * se queda con las figuras de colores de siempre, así que la sección
+ * nunca aparece coja.
+ *
+ * Tratamiento: el de las fotos de Estudio — marco de tinta y blanco
+ * y negro que recupera el color al pasar el ratón, sin veladura de
+ * color encima.
+ */
 import { CONTACT, waHref, mailHref } from '../config';
+import { resolverImagen } from '../lib/imagen';
 import Shape from './Shape.astro';
 
 interface Props {
@@ -8,20 +22,22 @@ interface Props {
 }
 
 const { n = '08' } = Astro.props;
+
+const retrato = resolverImagen(CONTACT.retrato, 900);
 ---
 
 <section class="section contacto" id="contacto">
   <div class="wrap contacto__grid">
     <div>
-      <p class="eyebrow">{n} / Contacto</p>
-      <h2>Cuéntame<br />tu proyecto</h2>
-      <p class="lead">
+      <p class="eyebrow reveal">{n} / Contacto</p>
+      <h2 class="reveal">Cuéntame<br />tu proyecto</h2>
+      <p class="lead reveal">
         No hay formulario que llenar. Escríbeme por WhatsApp o correo con
         tu género, cuántas canciones son y para cuándo las necesitas.
         Te respondo con un presupuesto en menos de 24 horas.
       </p>
 
-      <div class="contacto__cta">
+      <div class="contacto__cta reveal">
         <a class="btn" href={waHref} target="_blank" rel="noopener">
           Abrir WhatsApp
         </a>
@@ -33,11 +49,19 @@ const { n = '08' } = Astro.props;
       </p>
     </div>
 
-    <div class="contacto__art" aria-hidden="true">
-      <Shape tipo="ring" color="magenta" size="min(30vw, 12rem)" />
-      <Shape tipo="halfcircle" color="red" size="min(34vw, 14rem)" />
-      <Shape tipo="square" color="blue" size="min(18vw, 7rem)" />
-    </div>
+    {
+      retrato !== '' ? (
+        <figure class="retrato reveal reveal--der" data-foco>
+          <img src={retrato} alt={CONTACT.retratoAlt} loading="lazy" decoding="async" />
+        </figure>
+      ) : (
+        <div class="contacto__art" aria-hidden="true">
+          <Shape tipo="ring" color="magenta" size="min(30vw, 12rem)" />
+          <Shape tipo="halfcircle" color="red" size="min(34vw, 14rem)" />
+          <Shape tipo="square" color="blue" size="min(18vw, 7rem)" />
+        </div>
+      )
+    }
   </div>
 </section>
 
@@ -67,6 +91,45 @@ const { n = '08' } = Astro.props;
     justify-content: center;
     gap: var(--space-3);
   }
+
+  /* ── Retrato ───────────────────────────────────────────────────
+     Vertical: es un retrato, y en la columna estrecha de la derecha
+     una foto apaisada se quedaría en una tira. El tope de ancho
+     evita que en pantallas grandes crezca más que el bloque de
+     texto que tiene al lado.                                      */
+  .retrato {
+    position: relative;
+    margin: 0;
+    inline-size: 100%;
+    max-inline-size: 26rem;
+    justify-self: center;
+    border: var(--border-w) solid var(--brand-ink);
+    overflow: hidden;
+    transition:
+      transform var(--transition-lento),
+      box-shadow var(--transition-lento);
+  }
+
+  .retrato img {
+    display: block;
+    inline-size: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    filter: grayscale(1) contrast(1.05);
+    transition: filter 380ms ease, transform 450ms cubic-bezier(0.2, 0, 0.1, 1);
+  }
+
+  /* Blanco y negro limpio, como las fotos de Estudio: sin veladura
+     de color encima. El magenta en multiply es cosa de Sesiones, y
+     sobre esta foto —ya morada de por sí— la teñía entera. */
+
+  /* Con ratón lo enciende :hover; en táctil, la clase que pone el
+     scroll (src/scripts/foco.ts) al pasar por el centro. */
+  .retrato:is(:hover, .en-foco) {
+    transform: translate(-5px, -5px);
+    box-shadow: var(--shadow-hard);
+  }
+  .retrato:is(:hover, .en-foco) img { filter: grayscale(0) contrast(1); transform: scale(1.04); }
 
   @media (width >= 55rem) {
     .contacto__grid { grid-template-columns: 1.1fr 0.9fr; gap: var(--space-6); }

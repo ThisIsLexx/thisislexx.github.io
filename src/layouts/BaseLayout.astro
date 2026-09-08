@@ -67,10 +67,14 @@ const jsonLd = {
 
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 
-    <!-- Aplica el tema guardado antes del primer pintado: sin parpadeo -->
+    <!-- Aplica el tema guardado antes del primer pintado: sin parpadeo.
+         Y marca que hay JavaScript, que es de lo que cuelgan las
+         entradas al hacer scroll: sin esta clase el CSS no esconde
+         nada y la página se ve entera aunque el script no cargue. -->
     <script is:inline>
       const saved = localStorage.getItem('theme');
       if (saved) document.documentElement.dataset.theme = saved;
+      document.documentElement.classList.add('js');
     </script>
   </head>
 
@@ -83,9 +87,12 @@ const jsonLd = {
     <Footer />
 
     {/* En pantallas táctiles, el scroll enciende los efectos que en
-        escritorio enciende el ratón. Ver src/scripts/foco.ts */}
+        escritorio enciende el ratón. Ver src/scripts/foco.ts
+        Y las entradas de los bloques al entrar en pantalla:
+        ver src/scripts/revelar.ts */}
     <script>
       import '../scripts/foco';
+      import '../scripts/revelar';
     </script>
 
     <style>

@@ -17,9 +17,9 @@ const { n = '02' } = Astro.props;
 
 <section class="section" id="servicios">
   <div class="wrap">
-    <p class="eyebrow">{n} / Servicios</p>
-    <h2>Lo que hago</h2>
-    <p class="lead muted">
+    <p class="eyebrow reveal">{n} / Servicios</p>
+    <h2 class="reveal">Lo que hago</h2>
+    <p class="lead muted reveal">
       Puedes contratar una etapa suelta o el paquete completo.
       Los precios son de referencia por canción; el presupuesto final
       depende del alcance.
@@ -46,7 +46,7 @@ const { n = '02' } = Astro.props;
       }
     </ul>
 
-    <a class="btn btn--magenta" href={waHref} target="_blank" rel="noopener">
+    <a class="btn btn--magenta reveal" href={waHref} target="_blank" rel="noopener">
       Pedir cotización
     </a>
   </div>

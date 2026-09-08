@@ -34,13 +34,20 @@ const { n = '01' } = Astro.props;
   bloques.length > 0 && (
     <section class="section" id="estudio">
       <div class="wrap">
-        <p class="eyebrow eyebrow--circle">{n} / Estudio</p>
-        <h2>Dónde<br />pasa todo</h2>
+        <p class="eyebrow eyebrow--circle reveal">{n} / Estudio</p>
+        <h2 class="reveal">Dónde<br />pasa todo</h2>
 
         <div class="bloques">
+          {/* Los bloques alternan lado, así que la entrada alterna con
+              ellos: cada uno viene del borde donde vive su foto. */}
           {bloques.map((b, i) => (
             <article
-              class:list={['bloque', 'reveal', { 'bloque--invertido': i % 2 === 1 }]}
+              class:list={[
+                'bloque',
+                'reveal',
+                i % 2 === 1 ? 'reveal--der' : 'reveal--izq',
+                { 'bloque--invertido': i % 2 === 1 },
+              ]}
               data-foco
             >
               <figure class:list={['bloque__foto', `bloque__foto--${b.data.color}`]}>

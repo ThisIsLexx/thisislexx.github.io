@@ -28,6 +28,12 @@ export const CONTACT = {
   emailSubject: 'Cotización de producción musical',
   emailBody:
     'Hola Lexx,\n\nMi proyecto es:\nGénero:\nCanciones:\nFecha límite:\nPresupuesto aproximado:\n\nGracias.',
+  /** Retrato para la sección de contacto. Ruta en /public
+      (por ejemplo '/img/contacto/retrato.webp') o URL completa, igual
+      que el resto de imágenes. Vacío = se quedan las figuras de colores. */
+  retrato: '/img/contacto/retrato.webp',
+  /** Qué se ve en la foto, para quien no puede verla. */
+  retratoAlt: 'Lexx en su estudio, frente a la sesión de mezcla',
 } as const;
 
 /**
@@ -50,7 +56,10 @@ export const HERO = {
   /** Cuánto se atenúa la foto. 0 = foto limpia · 1 = negro. */
   oscurecer: 0.5,
   /** Viñeta: cuánto se oscurecen las esquinas. 0 = sin viñeta · 1 = mucha. */
-  vineta: 0.9,
+  vineta: 1,
+  /** Saturación de la foto. 1 = color original · 0 = blanco y negro.
+      Bajarlo apaga el color sin oscurecer, que es lo que hace 'oscurecer'. */
+  saturacion: 0.72,
   /** Partículas interactivas encima de la foto. false = solo la foto. */
   particulas: true,
 } as const;
