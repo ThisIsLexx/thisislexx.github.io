@@ -254,11 +254,6 @@ a {
 
 /* ── Utilidades ─────────────────────────────────────────────── */
 
-/* Con el menú desplegable abierto, la página de detrás se queda
-   quieta: si no, se hace scroll del fondo y al cerrar apareces en
-   otro sitio sin haber elegido nada. */
-.menu-abierto, .menu-abierto body { overflow: hidden; }
-
 .visually-hidden {
   position: absolute;
   width: 1px; height: 1px;

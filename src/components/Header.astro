@@ -53,32 +53,75 @@ const nav = NAV.filter((item) => !item.requiere || disponible[item.requiere]);
     </div>
   </div>
 
-  {/* Panel desplegable: el mismo menú, para cuando la barra no cabe.
-      Se esconde con [hidden] y no solo con CSS, para que el lector de
-      pantalla y el tabulador tampoco lo encuentren cuando está cerrado. */}
-  <nav class="panel" id="menu-movil" aria-label="Principal, móvil" hidden>
-    <ul role="list">
-      {nav.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
-    </ul>
-
-    {/* En pantallas muy estrechas el botón no cabe en la barra, así que
-        el panel se lo queda: la llamada a la acción no puede depender
-        de que sobren 20 píxeles. */}
-    <a class="btn panel__cta" href={waHref} target="_blank" rel="noopener">Cotizar por WhatsApp</a>
-  </nav>
 </header>
+
+{/* Panel desplegable: el mismo menú, para cuando la barra no cabe.
+    Cuelga de la barra pero vive fuera de <header> y fijo al viewport,
+    y esto no es un capricho: dentro, iba en el flujo de una barra
+    sticky, así que cualquier cosa que dejara al documento sin scroll
+    devolvía la barra al principio de la página y se llevaba el panel
+    con ella, fuera de la pantalla.
+    Se esconde con [hidden] y no solo con CSS, para que el lector de
+    pantalla y el tabulador tampoco lo encuentren cuando está cerrado. */}
+<nav class="panel" id="menu-movil" aria-label="Principal, móvil" hidden>
+  <ul role="list">
+    {nav.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+  </ul>
+
+  {/* En pantallas muy estrechas el botón no cabe en la barra, así que
+      el panel se lo queda: la llamada a la acción no puede depender
+      de que sobren 20 píxeles. */}
+  <a class="btn panel__cta" href={waHref} target="_blank" rel="noopener">Cotizar por WhatsApp</a>
+</nav>
+
+{/* Velo: apaga la página que asoma por debajo del panel y la recoge
+    para cerrar el menú de un toque. */}
+<div class="velo" data-velo hidden></div>
 
 <script>
   /* ── Menú desplegable ─────────────────────────────────────────── */
   const boton = document.querySelector<HTMLButtonElement>('[data-menu]');
   const panel = document.querySelector<HTMLElement>('#menu-movil');
+  const barra = document.querySelector<HTMLElement>('.bar');
+  const velo = document.querySelector<HTMLElement>('[data-velo]');
+  const ancha = matchMedia('(width >= 60rem)');
+
+  /* Con el menú abierto la página de detrás se queda quieta: si no, se
+     hace scroll del fondo y al cerrar apareces en otro sitio sin haber
+     elegido nada. Se frena el gesto en lugar de quitarle el scroll al
+     documento (el clásico overflow:hidden sobre <html>), porque sin
+     scroll la barra sticky no tiene de dónde agarrarse: vuelve al
+     principio de la página y se lleva el menú fuera de la pantalla si
+     lo abres a mitad del recorrido. */
+  const frenar = (e: Event) => {
+    // Si la barra ha vuelto a caber entera (giro del móvil, ventana
+    // ensanchada) el panel ya no se pinta: no queda nada que sujetar y
+    // seguir frenando dejaría la página quieta sin motivo.
+    if (ancha.matches) return;
+    // Si la lista no cabe hace su propio scroll, y de que no se lo
+    // pase a la página ya se ocupa overscroll-behavior.
+    if (panel && panel.contains(e.target as Node) && panel.scrollHeight > panel.clientHeight) return;
+    e.preventDefault();
+  };
 
   const abrir = (si: boolean) => {
     if (!boton || !panel) return;
     boton.setAttribute('aria-expanded', String(si));
+    // El panel cuelga de la barra sin estar dentro de ella, así que el
+    // hueco se mide al abrir: el alto de la barra cambia con el zoom
+    // de texto y no se puede dar por sabido.
+    if (si && barra) {
+      document.documentElement.style.setProperty(
+        '--bar-h',
+        `${barra.getBoundingClientRect().height}px`
+      );
+    }
     panel.hidden = !si;
-    // Con el panel abierto la página de detrás no debe moverse
-    document.documentElement.classList.toggle('menu-abierto', si);
+    if (velo) velo.hidden = !si;
+
+    const escuchar = si ? 'addEventListener' : 'removeEventListener';
+    document[escuchar]('wheel', frenar, { passive: false });
+    document[escuchar]('touchmove', frenar, { passive: false });
   };
 
   boton?.addEventListener('click', () =>
@@ -90,6 +133,8 @@ const nav = NAV.filter((item) => !item.requiere || disponible[item.requiere]);
     if ((e.target as HTMLElement).closest('a')) abrir(false);
   });
 
+  velo?.addEventListener('click', () => abrir(false));
+
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape' || panel?.hidden) return;
     abrir(false);
@@ -98,7 +143,6 @@ const nav = NAV.filter((item) => !item.requiere || disponible[item.requiere]);
 
   // Si la ventana crece hasta que la barra ya cabe entera, el panel
   // se cierra solo: si no, queda abierto y tapando media pantalla.
-  const ancha = matchMedia('(width >= 60rem)');
   ancha.addEventListener('change', (e) => e.matches && abrir(false));
 
   /* ── Interruptor de tema ──────────────────────────────────────── */
@@ -228,12 +272,29 @@ const nav = NAV.filter((item) => !item.requiere || disponible[item.requiere]);
 
   /* ── Panel ─────────────────────────────────────────────────────
      Ocupa lo que le queda a la pantalla por debajo de la barra y
-     hace scroll solo si los enlaces no caben (móvil apaisado). */
+     hace scroll solo si los enlaces no caben (móvil apaisado).
+     Fijo al viewport: el menú tiene que abrirse donde está mirando
+     quien lo abre, vaya por la primera sección o por el pie. */
   .panel {
-    max-block-size: calc(100dvh - 4.5rem);
+    position: fixed;
+    inset: var(--bar-h, 4.5rem) 0 auto;
+    /* Por debajo de la barra (z-index 50): el botón de cerrar manda */
+    z-index: 40;
+    max-block-size: calc(100dvh - var(--bar-h, 4.5rem));
     overflow-y: auto;
+    overscroll-behavior: contain;
     background: var(--color-bg);
     border-block-end: var(--border-w-thick) solid var(--brand-line);
+  }
+
+  /* El velo apaga la página que queda a la vista bajo el panel. Va en
+     tinta FIJA: en modo oscuro el --brand-ink es claro, y un velo
+     claro sobre fondo oscuro alumbra en vez de apagar. */
+  .velo {
+    position: fixed;
+    inset: var(--bar-h, 4.5rem) 0 0;
+    z-index: 39;
+    background: color-mix(in srgb, var(--ink-fixed) 55%, transparent);
   }
 
   .panel ul {
@@ -277,6 +338,7 @@ const nav = NAV.filter((item) => !item.requiere || disponible[item.requiere]);
     .nav { display: flex; }
     /* Con sitio en la barra, el botón y su panel sobran */
     .menu { display: none; }
-    .panel { display: none; }
+    .panel,
+    .velo { display: none; }
   }
 </style>
