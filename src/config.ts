@@ -24,7 +24,7 @@ export const CONTACT = {
   /** Formato internacional SIN espacios, +, ni guiones. Ej. México: 52 + LADA + número */
   whatsapp: '523312861625',
   whatsappMessage: 'Hola Lexx!, vi tu página y me interesa trabajar contigo en un proyecto.',
-  email: 'thisislexxb@gmail.com',
+  email: 'produc3dbylexx@gmail.com',
   emailSubject: 'Cotización de producción musical',
   emailBody:
     'Hola Lexx,\n\nMi proyecto es:\nGénero:\nCanciones:\nFecha límite:\nPresupuesto aproximado:\n\nGracias.',

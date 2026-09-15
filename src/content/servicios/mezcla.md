@@ -1,13 +1,13 @@
 ---
 titulo: Mezcla
-resumen: Balance, profundidad y punch. Que tu canción suene igual de bien en el estudio que en unos audífonos de $200.
-desde: "$3,500 MXN"
+resumen: Que tu canción suene igual de bien en el estudio que en unos audífonos de $200.
+desde: "$650 MXN"
 entrega: 5–7 días
 incluye:
-  - Mezcla analógica híbrida
+  - Nivelación de canales e instrumentos
   - Edición y afinación incluidas
   - Stems y versión instrumental
-  - Tres rondas de revisión
+  - Tres revisiones incluidas
 color: blue
 figura: square
 orden: 2

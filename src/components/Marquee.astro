@@ -4,19 +4,37 @@
  * Sustituye los textos por los tuyos; si tienes logos, cámbialos
  * por <img> con filter: grayscale(1) para mantener la paleta.
  */
-const referencias = [
-  'CELG', 'OVAN', 
-  'GustavoBK', 'Bleuss', 
-  'CELG', 'OVAN', 
-  'GustavoBK', 'Bleuss', 
-];
+const referencias = ['CELG', 'OVAN', 'GustavoBK', 'Bleuss'];
+
+/**
+ * Cuántas veces se repite la lista dentro de la cinta.
+ *
+ * La cinta se mueve exactamente el ancho de UNA copia y vuelve a
+ * empezar; como todas las copias son idénticas, el salto cae en un
+ * fotograma donde se ve lo mismo y el bucle resulta invisible. Para
+ * que eso funcione tiene que quedar contenido cubriendo la pantalla
+ * al final del recorrido, es decir: (COPIAS - 1) x ancho de copia
+ * >= ancho de la ventana. Con estos cuatro nombres la copia mide
+ * unos 610px, así que ocho copias cubren hasta 4270px: un 4K entero
+ * y de sobra. Medido en el navegador, no estimado.
+ *
+ * Si añades o quitas nombres, el recorrido se ajusta solo, porque
+ * el CSS deriva el paso de este número. Solo hay que subirlo si
+ * dejas la lista tan corta que ni así llena un monitor ancho.
+ */
+const COPIAS = 8;
 ---
 
-<div class="marquee" role="region" aria-label="Artistas y sellos con los que he trabajado">
+<div
+  class="marquee"
+  role="region"
+  aria-label="Artistas y sellos con los que he trabajado"
+  style={`--marquee-copias: ${COPIAS}`}
+>
   <div class="marquee__track">
     {
-      [0, 1].map((copy) => (
-        <ul class="marquee__list" role="list" aria-hidden={copy === 1 ? 'true' : undefined}>
+      Array.from({ length: COPIAS }, (_, copia) => (
+        <ul class="marquee__list" role="list" aria-hidden={copia > 0 ? 'true' : undefined}>
           {referencias.map((r) => (
             <li>
               <span class="dot" aria-hidden="true"></span>
@@ -44,7 +62,14 @@ const referencias = [
     display: flex;
     align-items: center;
     gap: var(--space-4);
-    padding: 0 var(--space-2);
+    /* Toda la separación va DETRÁS, nunca repartida a los dos lados:
+       el hueco entre la última entrada de una copia y la primera de
+       la siguiente tiene que medir lo mismo que el hueco entre dos
+       entrada cualesquiera. Con `padding: 0 var(--space-2)` la costura
+       sumaba 2x1rem = 32px frente a los 40px del resto, y ese cambio
+       de ritmo delataba dónde empalma la cinta. */
+    padding: 0;
+    padding-inline-end: var(--space-4);
     margin: 0;
     list-style: none;
     font-family: var(--font-display);
@@ -64,16 +89,29 @@ const referencias = [
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    .marquee__track { animation: slide 38s linear infinite; }
-    .marquee:hover .marquee__track { animation-play-state: paused; }
-    @keyframes slide {
-      to { transform: translateX(-50%); }
+    .marquee__track {
+      animation: marquee-desliza 38s linear infinite;
+      will-change: transform;
+    }
+
+    .marquee:hover .marquee__track,
+    .marquee:focus-within .marquee__track { animation-play-state: paused; }
+
+    /* Un ancho de copia, ni más ni menos. El -100%/COPIAS lo calcula
+       el navegador sobre el ancho real de la cinta, así que sigue
+       siendo exacto aunque cambien los nombres o el tipo de letra.
+       Antes estaba escrito a mano como -50%, que solo era correcto
+       mientras hubiera exactamente dos copias. */
+    @keyframes marquee-desliza {
+      to { transform: translateX(calc(-100% / var(--marquee-copias))); }
     }
   }
 
-  /* Sin animación, la segunda copia sobra */
+  /* Sin animación las copias sobran: queda una sola lista que se
+     recorre a mano. */
   @media (prefers-reduced-motion: reduce) {
     .marquee__list[aria-hidden='true'] { display: none; }
+    .marquee__list { padding-inline: var(--space-2); }
     .marquee { overflow-x: auto; }
   }
 </style>

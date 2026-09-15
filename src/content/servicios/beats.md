@@ -7,7 +7,7 @@ incluye:
   - Sesión de referencias contigo
   - Beat exclusivo con derechos cedidos
   - Stems abiertos para mezcla
-  - Dos variantes de estructura
+  - Incluye hasta 2 revisiones
 color: ink
 figura: triangle
 orden: 4

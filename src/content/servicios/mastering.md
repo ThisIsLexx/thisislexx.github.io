@@ -1,13 +1,12 @@
 ---
 titulo: Mastering
-resumen: El último 10% que separa una demo de un lanzamiento. Listo para Spotify, Apple Music y vinilo.
-desde: "$1,200 MXN"
+resumen: El último 10% que separa una demo de un lanzamiento. Listo para plataformas de streaming.
+desde: "$2,000 MXN"
 entrega: 48 horas
 incluye:
-  - Máster para streaming y DDP
-  - Control de loudness por plataforma
+  - Máster para plataformas de streaming
   - Secuenciado de EP o álbum
-  - Revisiones ilimitadas
+  - Incluye hasta 5 revisiones
 color: magenta
 figura: quarter
 orden: 3

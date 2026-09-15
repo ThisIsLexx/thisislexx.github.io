@@ -103,7 +103,16 @@ const { n = '07' } = Astro.props;
     }
   }
 
-  @media (width >= 55rem) {
+  /* 64rem y no 55rem: el titular es de cartel y su palabra más larga
+     ("frecuentes") pide cerca de 500px a tamaño completo. Como la
+     pista es `0.8fr` —mínimo automático—, esa palabra marca un suelo
+     que la columna no puede bajar, y entre 55rem y 64rem ese suelo se
+     comía la fila: a 880px el titular se quedaba con 376px y las
+     respuestas con 323, al revés de la proporción que pide el diseño.
+     Repartir a dos columnas antes de que quepan las dos no es repartir.
+     Por debajo de 64rem la FAQ va a una sola columna, donde el titular
+     tiene el ancho entero y las respuestas también. */
+  @media (width >= 64rem) {
     .faq__grid { grid-template-columns: 0.8fr 1.2fr; gap: var(--space-6); }
   }
 </style>

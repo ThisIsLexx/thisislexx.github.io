@@ -110,11 +110,19 @@ h1, h2, h3, h4 {
   font-family: var(--font-display);
   text-transform: uppercase;
   /* Red de seguridad: ninguna palabra puede salirse de su caja.
-     Funciona porque todas las retículas usan minmax(0, 1fr); con
-     pistas 'auto' la celda crecería en vez de partir la palabra.
-     Tiene que ser 'anywhere' y no 'break-word': solo 'anywhere'
-     cuenta al calcular el ancho mínimo de una celda de grid.     */
-  overflow-wrap: anywhere;
+     'break-word' y no 'anywhere', aunque las dos partan la palabra
+     exactamente igual cuando no cabe. La diferencia está en lo que
+     le cuentan a la retícula: 'anywhere' deja el ancho mínimo del
+     titular en UN carácter, así que una pista con mínimo automático
+     —`0.8fr`, `1fr auto`— cree que le basta cualquier hueco y nunca
+     reserva sitio para la palabra más larga. Eso es lo que partía
+     "PREGUNT/AS" en la FAQ: la columna medía 416px y "frecuentes"
+     pedía 498. Con 'break-word' el mínimo vuelve a ser la palabra
+     entera y la columna se ensancha sola hasta que cabe.
+     Sigue sin haber desbordes en las retículas de tarjetas, que son
+     minmax(0, 1fr): ahí el mínimo es 0 pase lo que pase, y la
+     palabra se parte igual antes que salirse.                     */
+  overflow-wrap: break-word;
   /* `manual` y no `auto`: con guionado automático el navegador partía
      palabras a mitad —"CAN-CIÓN" en el titular del móvil— y en un
      titular de cartel eso se lee como un error de imprenta. Así solo

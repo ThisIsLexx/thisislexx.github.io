@@ -529,8 +529,14 @@ const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
     font-size: var(--step-xs);
     letter-spacing: var(--tracking-label);
     text-transform: uppercase;
-    /* El correo es largo y no se puede partir por cualquier sitio */
-    overflow-wrap: anywhere;
+    /* El correo es largo: si de verdad no cabe, que se parta antes
+       que desbordar. 'break-word' y no 'anywhere', que era justo lo
+       contrario de lo que pedía esta línea: con 'anywhere' la
+       dirección se troceaba por cualquier letra —"produc3dbylexx@ /
+       gmail.com"— aunque hubiera sitio de sobra bajándola entera al
+       renglón siguiente. Ahora solo se parte si ella sola no cabe
+       en un renglón completo. */
+    overflow-wrap: break-word;
   }
 
   @media (width >= 55rem) {
