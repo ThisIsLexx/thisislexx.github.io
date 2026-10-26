@@ -76,7 +76,10 @@
      necesitan su propio escalón, más contenido que --step-1.      */
   --step-card: clamp(1.25rem, 1rem + 0.8vw, 1.5rem);
   --step-2: clamp(1.75rem, 1.4rem + 1.6vw, 2.9rem);
-  --step-3: clamp(2.4rem, 1.6rem + 3.4vw, 4.6rem);
+  /* Titulares de sección. Tope en 4.2rem para que el del hero
+     (5.5rem) siga mandando: con 4.6 cada sección gritaba casi tanto
+     como la portada y la página perdía jerarquía. */
+  --step-3: clamp(2.4rem, 1.6rem + 3vw, 4.2rem);
   --step-4: clamp(3.2rem, 1.4rem + 7.2vw, 8rem);
 
   /* ── 4. GEOMETRÍA Y RITMO ────────────────────────────────────
@@ -93,7 +96,9 @@
   --space-4: 2.5rem;
   --space-5: 4rem;
   --space-6: 6rem;
-  --space-7: clamp(4rem, 10vw, 9rem);
+  /* Aire de cada sección, arriba y abajo. Con 9rem de tope, entre dos
+     secciones quedaban casi 300px vacíos en escritorio. */
+  --space-7: clamp(4rem, 8vw, 7rem);
 
   /* Separación entre tarjetas (servicios, trabajos, testimonios,
      pasos del proceso). Súbelo o bájalo aquí y cambia en todo el
@@ -118,6 +123,9 @@
      scroll del móvil, 180ms se siente como un parpadeo — el cambio
      tiene que acompañar al dedo, no adelantarse.                  */
   --transition-lento: 280ms cubic-bezier(0.2, 0, 0.1, 1);
+  /* Para las figuras que giran al realzar: frenada larga y limpia,
+     sin rebote. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ── 5. MODO OSCURO ────────────────────────────────────────────

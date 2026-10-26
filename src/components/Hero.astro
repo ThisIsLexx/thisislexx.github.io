@@ -13,7 +13,7 @@
  * Todo lo editable (qué foto, cuánto se atenúa, si hay partículas)
  * vive en HERO, dentro de src/config.ts.
  */
-import { SITE, CONTACT, HERO, waHref, mailHref } from '../config';
+import { SITE, HERO, waHref, mailHref } from '../config';
 import { resolverImagen } from '../lib/imagen';
 
 const foto = resolverImagen(HERO.imagen, 1800);
@@ -64,7 +64,7 @@ const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
         <a class="btn btn--ghost" href={mailHref}>Escribir correo</a>
       </div>
       <p class="hero__meta muted reveal" style="--retardo: 570ms">
-        Respuesta en menos de 48 h · {CONTACT.email}
+        Respuesta en menos de 48 h
       </p>
     </div>
   </div>
@@ -398,7 +398,6 @@ const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
     min-block-size: min(84svh, 44rem);
     display: grid;
     align-items: center;
-    border-block-end: var(--border-w-thick) solid var(--brand-line);
   }
 
   /* ── Capas del fondo ───────────────────────────────────────────
@@ -529,14 +528,6 @@ const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
     font-size: var(--step-xs);
     letter-spacing: var(--tracking-label);
     text-transform: uppercase;
-    /* El correo es largo: si de verdad no cabe, que se parta antes
-       que desbordar. 'break-word' y no 'anywhere', que era justo lo
-       contrario de lo que pedía esta línea: con 'anywhere' la
-       dirección se troceaba por cualquier letra —"produc3dbylexx@ /
-       gmail.com"— aunque hubiera sitio de sobra bajándola entera al
-       renglón siguiente. Ahora solo se parte si ella sola no cabe
-       en un renglón completo. */
-    overflow-wrap: break-word;
   }
 
   @media (width >= 55rem) {

@@ -6,18 +6,11 @@ const items = await Promise.all(
   entries.map(async (e) => ({ ...e, Body: (await render(e)).Content }))
 );
 
-interface Props {
-  /** Número de sección; lo calcula index.astro según cuáles se pintan */
-  n?: string;
-}
-
-const { n = '07' } = Astro.props;
 ---
 
 <section class="section" id="faq">
   <div class="wrap faq__grid">
     <div>
-      <p class="eyebrow eyebrow--circle reveal">{n} / Dudas</p>
       <h2 class="reveal">Preguntas<br />frecuentes</h2>
     </div>
 

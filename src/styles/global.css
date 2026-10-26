@@ -192,7 +192,14 @@ a {
   overflow: hidden; /* contiene las formas decorativas */
 }
 
-/* Etiqueta numerada de sección: "01 / SERVICIOS" */
+/* La banda de créditos ya cierra con su propia línea gruesa: si la
+   sección de debajo trajera la suya, saldrían dos rayas pegadas. */
+.creditos + .section { border-top: 0; }
+
+/* Entradilla bajo el titular de sección: pegada a él, pero sin tocarlo */
+.section h2 + .lead { margin-block-start: var(--space-3); }
+
+/* Rótulo de la portada: "PRODUCTOR MUSICAL · GUADALAJARA" */
 .eyebrow {
   display: flex;
   align-items: center;
@@ -211,14 +218,6 @@ a {
   block-size: 1.1em;
   background: var(--color-accent);
   flex: none;
-}
-
-.eyebrow--circle::before { border-radius: 50%; background: var(--color-accent-2); }
-.eyebrow--tri::before {
-  background: none;
-  border-inline: 0.55em solid transparent;
-  border-block-end: 1.1em solid var(--color-accent-3);
-  block-size: 0;
 }
 
 .lead {

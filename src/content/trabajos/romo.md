@@ -1,6 +1,6 @@
 ---
 titulo: Mezcla de Problemzzz
-artista: Santiago Romo,
+artista: Santiago Romo
 anio: 2024
 genero: [Trap, RnB]
 roles: [Mezcla]

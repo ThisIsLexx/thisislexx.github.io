@@ -1,9 +1,11 @@
 ---
 # imagen: /img/galeria/sesion-02.jpg
-imagen: /img/galeria/marcador-02.svg
-alt: Detalle de la mesa de trabajo durante una mezcla
-titulo: Mezcla
+imagen: /img/galeria/descanso.webp
+alt: Rincón del estudio con un grafiti de neón en la pared, una silla morada y la puerta al balcón abierta
+titulo: Zona de descanso
 # ancha: true hace que ocupe dos columnas en pantallas grandes
-ancha: true
+ancha: false
+# Foto vertical: en el hueco apaisado se perdían el grafiti y la silla.
+formato: vertical
 orden: 2
 ---

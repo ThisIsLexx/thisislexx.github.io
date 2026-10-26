@@ -16,12 +16,6 @@ import { CONTACT, waHref, mailHref } from '../config';
 import { resolverImagen } from '../lib/imagen';
 import Shape from './Shape.astro';
 
-interface Props {
-  /** Número de sección; lo calcula index.astro según cuáles se pintan */
-  n?: string;
-}
-
-const { n = '08' } = Astro.props;
 
 const retrato = resolverImagen(CONTACT.retrato, 900);
 ---
@@ -29,7 +23,6 @@ const retrato = resolverImagen(CONTACT.retrato, 900);
 <section class="section contacto" id="contacto">
   <div class="wrap contacto__grid">
     <div>
-      <p class="eyebrow reveal">{n} / Contacto</p>
       <h2 class="reveal">Cuéntame<br />tu proyecto</h2>
       <p class="lead reveal">
         No hay formulario que llenar. Escríbeme por WhatsApp o correo con

@@ -88,7 +88,7 @@ src/
 │  ├─ Header.astro       ← barra fija con menú y botón de tema
 │  ├─ Hero.astro         ← titular y llamadas a la acción
 │  ├─ HeroArt.astro      ← tornamesa + ecualizador (CSS puro)
-│  ├─ Marquee.astro      ← banda de referencias en movimiento
+│  ├─ Credits.astro      ← banda de créditos: artistas con los que has trabajado
 │  ├─ Services.astro     ← tarjetas de servicios
 │  ├─ Works.astro        ← portafolio
 │  ├─ Embed.astro        ← reproductor de Spotify / YouTube / SoundCloud
@@ -217,17 +217,18 @@ quieta.
 > `src/components/HeroArt.astro`, sin usar. Para recuperarla, impórtala en
 > `Hero.astro` y ponla donde quieras; si no la vas a querer, borra el archivo.
 
-### Banda de referencias (marquesina)
+### Banda de créditos
 
-`src/components/Marquee.astro` → array `referencias`. Son los nombres que
-desfilan bajo el hero: artistas, sellos, estudios, medios.
+`src/components/Credits.astro` → array `artistas`. Son los nombres que
+aparecen bajo el hero, quietos y en grande, como los créditos de un disco.
 
 ```astro
-const referencias = ['CELG', 'OVAN', 'GustavoBK', 'Bleuss'];
+const artistas = ['CELG', 'OVAN', 'GustavoBK', 'Bleuss'];
 ```
 
-Repite la lista si tienes pocos nombres, para que la banda no muestre huecos.
-Se detiene al pasar el cursor para poder leerla.
+Las figuras que los separan (cuadrado, círculo, triángulo) se reparten solas.
+Con más de seis u ocho nombres la línea empieza a partirse en dos; ahí conviene
+quedarse con los más reconocibles.
 
 ### Servicios
 
@@ -491,16 +492,13 @@ Para las fotos definitivas, mejor una de estas, por orden de comodidad:
 3. **Un repositorio de GitHub servido por jsDelivr**
    (`https://cdn.jsdelivr.net/gh/usuario/repo@main/foto.jpg`).
 
-#### El menú y la numeración se ajustan solos
+#### El menú se ajusta solo
 
-Estudio y Sesiones **solo existen si tienen fotos**. Mientras estén vacías:
+Estudio y Sesiones **solo existen si tienen fotos**. Mientras estén vacías, sus
+enlaces no aparecen en el menú (si no, apuntarían a un ancla inexistente).
 
-- sus enlaces no aparecen en el menú (si no, apuntarían a un ancla inexistente),
-- y la numeración va corrida — `01 / Servicios`, `02 / Trabajos`… — sin dejar
-  huecos.
-
-En cuanto pongas la primera imagen, la sección aparece, su enlace entra en el
-menú y todo se renumera. No hay que tocar código.
+En cuanto pongas la primera imagen, la sección aparece y su enlace entra en el
+menú. No hay que tocar código.
 
 #### Antes de subir las fotos
 
@@ -627,7 +625,7 @@ ningún tono cumple bien las dos cosas:
 
 | Familia | Para qué | Ejemplos de uso |
 | --- | --- | --- |
-| `--brand-red` · `--brand-blue` · `--brand-yellow` | **Bloques**: llevan texto encima, así que contrastan con `--color-on-*` | Tarjetas de servicio, botones, la banda de referencias, etiquetas |
+| `--brand-red` · `--brand-blue` · `--brand-yellow` | **Bloques**: llevan texto encima, así que contrastan con `--color-on-*` | Tarjetas de servicio, botones, la banda de créditos, etiquetas |
 | `--color-accent-text` · `--color-accent-2-text` · `--color-accent-3-text` | **Texto y marcas finas**: van directamente sobre el fondo de página, así que contrastan con *el fondo* | Numerales, comillas, barras del ecualizador, líneas de 2–3 px, figuras decorativas |
 
 Si mezclas los dos papeles algo desaparecerá. El caso más visible es el
@@ -855,7 +853,6 @@ const equipo = (await getCollection('equipo')).sort(
 
 <section class="section" id="equipo">
   <div class="wrap">
-    <p class="eyebrow">07 / Equipo</p>
     <h2>Con qué<br />se graba</h2>
 
     <ul class="grid" role="list">
@@ -901,10 +898,9 @@ Las cuatro convenciones:
 1. **`class="section"`** en el `<section>`: aporta el aire vertical y la línea
    divisoria superior. Y un `id`, para poder enlazarlo desde el menú.
 2. **`.wrap`** dentro: centra el contenido y aplica los márgenes laterales.
-3. **`.eyebrow`** con el número de sección y **`<h2>`** con el título. Hay tres
-   variantes de viñeta: `.eyebrow` (cuadrado rojo), `.eyebrow--circle`
-   (círculo azul) y `.eyebrow--tri` (triángulo amarillo) — alterna para dar
-   ritmo a la página.
+3. **`<h2>`** con el título, sin rótulo encima: el titular ya nombra la
+   sección. Si lleva entradilla, ponle `class="lead"` justo debajo y el
+   espacio entre los dos sale solo.
 4. **Nunca escribas un color ni una medida a pelo.** Si te falta un valor,
    añade el token en `brand.css`. Es lo que mantiene el sitio coherente.
 
@@ -948,17 +944,7 @@ En `src/config.ts` añade a `NAV`:
 El menú cabe cómodamente hasta 6 entradas; con más conviene acortar las
 etiquetas o replantear la navegación.
 
-### Paso 7 — Numerar
-
-**No hay que renumerar nada a mano.** Los rótulos `01 /`, `02 /` … se calculan
-en `src/pages/index.astro`: hay un array con el orden de las secciones y desde
-ahí baja el número a cada componente como la prop `n`. Mete la tuya en ese
-array, en su sitio, y las de abajo se recolocan solas.
-
-Es lo que permite que Estudio y Sesiones aparezcan y desaparezcan según tengan
-fotos sin dejar huecos en la numeración.
-
-### Paso 8 — Comprobar
+### Paso 7 — Comprobar
 
 ```bash
 npm run build
@@ -1123,7 +1109,7 @@ al dominio raíz.
       placeholder).
 - [ ] Servicios, trabajos, testimonios y FAQ con contenido propio; sin
       quedar ninguno de ejemplo.
-- [ ] Referencias reales en `Marquee.astro`.
+- [ ] Artistas reales en `Credits.astro`.
 - [ ] `public/img/og.png` (1200 × 630 px) para compartir el enlace.
 - [ ] Fotos de clientes en `public/img/clientes/` y referenciadas en cada
       testimonio.

@@ -28,21 +28,13 @@ const RATIOS = {
 const fotos = (await getCollection('galeria'))
   .filter((f) => f.data.imagen.trim() !== '')
   .sort((a, b) => a.data.orden - b.data.orden);
-
-interface Props {
-  /** Número de sección; lo calcula index.astro según cuáles se pintan */
-  n?: string;
-}
-
-const { n = '04' } = Astro.props;
 ---
 
 {
   fotos.length > 0 && (
     <section class="section" id="sesiones">
-      <div class="wrap">
-        <p class="eyebrow eyebrow--tri reveal">{n} / Galeria y sesiones</p>
-        <h2 class="reveal">Del estudio a<br />la realidad</h2>
+      <div class="wrap sesiones">
+        <h2 class="reveal">Del estudio a <br />la realidad</h2>
 
         <ul class="galeria" role="list">
           {fotos.map((f) => (
@@ -151,8 +143,28 @@ const { n = '04' } = Astro.props;
     .galeria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 
+  /* En ancho, el titular se queda en la primera columna y las fotos
+     ocupan las otras dos. Así dos o tres fotos llenan la fila en vez de
+     dejar un hueco a la derecha, y si llegan más, bajan en su columna
+     mientras el titular las acompaña pegado arriba. */
   @media (width >= 62rem) {
-    .galeria { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .foto--ancha { grid-column: span 2; }
+    .sesiones {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+      gap: var(--gap-cards);
+      align-items: start;
+    }
+
+    /* En la columna estrecha el corte escrito a mano dejaba "LA" solo
+       en un renglón: aquí el titular se reparte sin él. */
+    .sesiones h2 br { display: none; }
+
+    .sesiones h2 {
+      position: sticky;
+      inset-block-start: calc(var(--bar-h, 4.5rem) + var(--space-4));
+    }
+
+    .galeria { margin-block-start: 0; }
+    .foto--ancha { grid-column: 1 / -1; }
   }
 </style>
