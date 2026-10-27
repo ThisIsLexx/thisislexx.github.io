@@ -1,12 +1,12 @@
 ---
 titulo: El estudio
 # Deja esta ruta vacía y el bloque no se pinta. Pon aquí tu foto:
-#   1. Copia el archivo a public/img/estudio/
-#   2. Escribe la ruta SIN "public", empezando por barra
+#   1. Copia el archivo a src/assets/img/estudio/
+#   2. Escribe la ruta SIN "src/assets", empezando por barra
 # imagen: /img/estudio/cabina.jpg
 # O pega el enlace de Compartir de Google Drive tal cual (ver README):
 # imagen: https://drive.google.com/file/d/TU_ID/view?usp=sharing
-imagen: /img/estudio/estudio.webp
+imagen: /img/estudio/estudio.jpg
 alt: Estudio de grabación con el micrófono montado y todas las luces encendidas
 figura: circle
 color: magenta

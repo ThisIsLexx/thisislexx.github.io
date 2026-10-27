@@ -31,14 +31,6 @@ const nav = NAV.filter((item) => !item.requiere || disponible[item.requiere]);
     </nav>
 
     <div class="bar__actions">
-      <button
-        type="button"
-        class="toggle"
-        data-theme-toggle
-        aria-label="Cambiar entre modo claro y oscuro"
-      >
-        <span class="toggle__half" aria-hidden="true"></span>
-      </button>
       <a class="btn btn--sm cotizar" href={waHref} target="_blank" rel="noopener">Cotizar</a>
 
       <button
@@ -145,18 +137,6 @@ const nav = NAV.filter((item) => !item.requiere || disponible[item.requiere]);
   // Si la ventana crece hasta que la barra ya cabe entera, el panel
   // se cierra solo: si no, queda abierto y tapando media pantalla.
   ancha.addEventListener('change', (e) => e.matches && abrir(false));
-
-  /* ── Interruptor de tema ──────────────────────────────────────── */
-  const btn = document.querySelector('[data-theme-toggle]');
-  btn?.addEventListener('click', () => {
-    const root = document.documentElement;
-    const current =
-      root.dataset.theme ??
-      (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    const next = current === 'dark' ? 'light' : 'dark';
-    root.dataset.theme = next;
-    localStorage.setItem('theme', next);
-  });
 </script>
 
 <style>
@@ -212,26 +192,6 @@ const nav = NAV.filter((item) => !item.requiere || disponible[item.requiere]);
   .nav a:hover { border-block-end-color: var(--color-accent); }
 
   .bar__actions { display: flex; align-items: center; gap: var(--space-2); }
-
-  .toggle {
-    inline-size: 1.75rem;
-    block-size: 1.75rem;
-    padding: 0;
-    background: none;
-    border: var(--border-w) solid var(--brand-ink);
-    border-radius: 50%;
-    overflow: hidden;
-    cursor: pointer;
-    display: grid;
-    place-items: center;
-  }
-
-  /* Círculo mitad tinta / mitad papel: el símbolo más Bauhaus posible */
-  .toggle__half {
-    inline-size: 100%;
-    block-size: 100%;
-    background: linear-gradient(90deg, var(--brand-ink) 50%, transparent 50%);
-  }
 
   .btn--sm { padding: 0.55em 1.1em; font-size: var(--step-xs); box-shadow: 3px 3px 0 var(--brand-ink); }
 
@@ -324,9 +284,9 @@ const nav = NAV.filter((item) => !item.requiere || disponible[item.requiere]);
     margin: 0 var(--gutter) var(--space-3);
   }
 
-  /* Por debajo de 30rem no caben a la vez el logo, el interruptor de
-     tema, el botón de cotizar y el de menú: gana el menú, y cotizar
-     se va dentro del panel. */
+  /* Por debajo de 30rem no caben a la vez el logo, el botón de cotizar
+     y el de menú con aire: gana el menú, y cotizar se va dentro del
+     panel. */
   @media (width < 30rem) {
     .cotizar { display: none; }
   }

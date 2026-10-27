@@ -6,7 +6,8 @@
  * Antes eran dos secciones (Estudio y Sesiones) que enseñaban lo
  * mismo, el estudio, con dos titulares distintos. Ahora es una:
  *   · src/content/estudio/  → un archivo = un bloque foto + texto
- *   · src/content/galeria/  → un archivo = una foto de sesión
+ *   · src/content/galeria/  → un archivo = una polaroid del muro de
+ *                             sesiones (se recorta cuadrada)
  *
  * Lo que no trae imagen se descarta, y si no queda nada en ninguna
  * de las dos colecciones la sección entera no se pinta. Así los
@@ -15,15 +16,15 @@
  */
 import { getCollection, render } from 'astro:content';
 import Shape from './Shape.astro';
-import { resolverImagen } from '../lib/imagen';
+import Foto from './Foto.astro';
 
-/** Proporción del hueco de cada foto de sesión, según su campo `formato` */
-const RATIOS = {
-  apaisado: '4 / 3',
-  vertical: '3 / 4',
-  cuadrado: '1 / 1',
-  original: 'auto',
-} as const;
+/** Giro de cada polaroid en el muro, en grados. Se repiten en orden:
+    un patrón corto que no se note, y sin aleatorio para que la página
+    salga igual en cada visita. */
+const GIROS = [-3, 2.5, -1.5, 3, -2, 1.5, -2.5];
+
+/** Color de la chincheta de cada polaroid, en el orden del logotipo */
+const CHINCHETAS = ['red', 'blue', 'magenta'] as const;
 
 const entradas = (await getCollection('estudio'))
   .filter((e) => e.data.imagen.trim() !== '')
@@ -58,11 +59,13 @@ const fotos = (await getCollection('galeria'))
                 data-foco
               >
                 <figure class="bloque__foto">
-                  <img
-                    src={resolverImagen(b.data.imagen)}
+                  {/* Media columna en ancho (algo más de 600 px), todo el
+                      ancho de la página en móvil. */}
+                  <Foto
+                    src={b.data.imagen}
                     alt={b.data.alt}
-                    loading="lazy"
-                    decoding="async"
+                    widths={[480, 720, 960, 1280]}
+                    sizes="(min-width: 78rem) 640px, (min-width: 55rem) 52vw, 100vw"
                   />
                   <Shape
                     tipo={b.data.figura}
@@ -85,20 +88,29 @@ const fotos = (await getCollection('galeria'))
           <div class="sesiones">
             <h3 class="sesiones__titulo">Sesiones</h3>
 
-            <ul class="galeria" role="list">
-              {fotos.map((f) => (
+            <ul class="muro" role="list">
+              {fotos.map((f, i) => (
                 <li
-                  class:list={['foto', 'reveal', 'reveal--zoom', { 'foto--ancha': f.data.ancha }]}
-                  style={`--foto-ratio: ${RATIOS[f.data.formato]}`}
+                  class="polaroid reveal reveal--zoom"
+                  style={`--giro: ${GIROS[i % GIROS.length]}deg`}
                   data-foco
                 >
-                  <img
-                    src={resolverImagen(f.data.imagen)}
-                    alt={f.data.alt}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  {f.data.titulo && <p class="foto__pie">{f.data.titulo}</p>}
+                  <figure>
+                    <span
+                      class:list={['chincheta', `chincheta--${CHINCHETAS[i % CHINCHETAS.length]}`]}
+                      aria-hidden="true"
+                    />
+                    {/* Polaroid pequeña: media columna en móvil, unos
+                        200 px en ancho. */}
+                    <Foto
+                      src={f.data.imagen}
+                      alt={f.data.alt}
+                      widths={[240, 360, 480]}
+                      sizes="(min-width: 42rem) 14rem, 45vw"
+                      anchoRemoto={600}
+                    />
+                    {f.data.titulo && <figcaption>{f.data.titulo}</figcaption>}
+                  </figure>
                 </li>
               ))}
             </ul>
@@ -205,11 +217,16 @@ const fotos = (await getCollection('galeria'))
     }
   }
 
-  /* ── Sesiones ──────────────────────────────────────────────────
-     Mismo tratamiento que las fotos de arriba: marco de tinta, gris
-     por defecto y a color al acercarse. Sin veladura de color: dos
-     tratamientos de foto en una misma sección se leen como dos
-     sitios distintos. */
+  /* ── Sesiones: muro de polaroids ───────────────────────────────
+     Fotos pequeñas en marco de papel, cada una ligeramente girada y
+     sujeta con una chincheta en uno de los colores de la marca, como
+     las que se pegan en la pared del estudio. Gris por defecto y a
+     color al acercarse, igual que las fotos de arriba; al pasar el
+     ratón la polaroid se endereza y se adelanta.
+
+     El giro va en la propiedad `rotate` y el realce en `scale`, no en
+     `transform`: así la entrada al hacer scroll (que anima transform)
+     no les quita el giro mientras dura. */
   .sesiones {
     display: grid;
     gap: var(--space-4);
@@ -218,70 +235,94 @@ const fotos = (await getCollection('galeria'))
 
   .sesiones__titulo { font-size: var(--step-2); }
 
-  .galeria {
+  .muro {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--gap-cards);
-    /* Sin esto, una foto baja estira a sus vecinas de fila y les deja
-       una franja de fondo debajo del marco. */
-    align-items: start;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 8.5rem), 1fr));
+    gap: var(--space-4) var(--space-3);
     margin: 0;
-    padding: 0;
+    padding: var(--space-2) 0 0;
     list-style: none;
   }
 
-  .foto {
+  .polaroid {
+    rotate: var(--giro, 0deg);
+    transition:
+      rotate 320ms var(--ease-out),
+      scale 320ms var(--ease-out);
+  }
+
+  .polaroid figure {
     position: relative;
     margin: 0;
-    border: var(--border-w) solid var(--brand-ink);
-    overflow: hidden;
+    padding: 0.55rem 0.55rem 0;
+    background: var(--paper-fixed);
+    color: var(--ink-fixed);
+    box-shadow: 0 12px 24px -10px rgb(0 0 0 / 0.7);
   }
 
-  .foto img {
+  .polaroid img {
     display: block;
     inline-size: 100%;
-    aspect-ratio: var(--foto-ratio, 4 / 3);
+    aspect-ratio: 1;
     object-fit: cover;
     filter: grayscale(1) contrast(1.05);
-    transition: filter 420ms var(--ease-out), transform 620ms var(--ease-out);
+    transition: filter 420ms var(--ease-out);
   }
 
-  .foto:is(:hover, .en-foco) img { filter: grayscale(0) contrast(1); transform: scale(1.03); }
-
-  /* Pie que sube desde abajo. Sin ratón se queda visible: la
-     información no puede depender de un puntero que no existe. */
-  .foto__pie {
-    position: absolute;
-    inset-inline: 0;
-    inset-block-end: 0;
-    margin: 0;
-    padding: var(--space-2);
-    background: var(--brand-ink);
-    color: var(--brand-paper);
+  /* El pie va en el margen grueso de abajo, como escrito en la foto.
+     Sin título, el margen se queda igual: así todas miden lo mismo. */
+  .polaroid figcaption {
+    min-block-size: 2.4rem;
+    padding: 0.5rem 0.1rem 0.6rem;
+    font-family: var(--font-display);
+    font-weight: 600;
     font-size: var(--step-xs);
-    letter-spacing: var(--tracking-label);
+    letter-spacing: 0.06em;
+    line-height: 1.2;
     text-transform: uppercase;
-    max-width: none;
   }
+
+  .polaroid figure:not(:has(figcaption))::after {
+    content: '';
+    display: block;
+    block-size: 2.4rem;
+  }
+
+  /* La chincheta: un círculo de color clavado arriba al centro */
+  .chincheta {
+    position: absolute;
+    inset-block-start: -0.45rem;
+    inset-inline-start: 50%;
+    translate: -50% 0;
+    inline-size: 0.95rem;
+    block-size: 0.95rem;
+    border-radius: 50%;
+    background: var(--chincheta-c);
+    box-shadow: 0 2px 3px rgb(0 0 0 / 0.45);
+  }
+
+  .chincheta--red { --chincheta-c: var(--brand-red); }
+  .chincheta--blue { --chincheta-c: var(--brand-blue); }
+  .chincheta--magenta { --chincheta-c: var(--brand-magenta); }
+
+  .polaroid:is(:hover, .en-foco) img { filter: grayscale(0) contrast(1); }
 
   @media (hover: hover) {
-    .foto__pie {
-      translate: 0 100%;
-      transition: translate var(--transition-lento);
+    .polaroid:hover {
+      rotate: 0deg;
+      scale: 1.06;
+      position: relative;
+      z-index: 1;
     }
-
-    .foto:hover .foto__pie { translate: 0 0; }
   }
 
   @media (width >= 42rem) {
-    .galeria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .foto--ancha { grid-column: 1 / -1; }
+    .muro { grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }
   }
 
-  /* En ancho, el rótulo se queda en la primera columna y las fotos
-     ocupan el resto: dos o tres fotos llenan la fila en vez de dejar
-     un hueco a la derecha, y si llegan más, bajan en su columna
-     mientras el rótulo las acompaña pegado arriba. */
+  /* En ancho, el rótulo se queda en la primera columna y el muro
+     ocupa el resto; si llegan más fotos, el muro crece hacia abajo
+     mientras el rótulo lo acompaña pegado arriba. */
   @media (width >= 62rem) {
     .sesiones {
       grid-template-columns: minmax(0, 1fr) minmax(0, 2.4fr);

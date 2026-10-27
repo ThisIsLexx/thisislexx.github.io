@@ -14,11 +14,11 @@
  * las fotos de Estudio: blanco y negro que recupera el color.
  */
 import { CONTACT, waHref, mailHref } from '../config';
-import { resolverImagen } from '../lib/imagen';
+import Foto from './Foto.astro';
 import Shape from './Shape.astro';
 
 
-const retrato = resolverImagen(CONTACT.retrato, 900);
+const retrato = CONTACT.retrato.trim();
 ---
 
 <section class="section contacto" id="contacto">
@@ -46,7 +46,13 @@ const retrato = resolverImagen(CONTACT.retrato, 900);
     {
       retrato !== '' ? (
         <figure class="retrato reveal reveal--der" data-foco>
-          <img src={retrato} alt={CONTACT.retratoAlt} loading="lazy" decoding="async" />
+          <Foto
+            src={retrato}
+            alt={CONTACT.retratoAlt}
+            widths={[400, 600, 832]}
+            sizes="(min-width: 30rem) 26rem, 100vw"
+            anchoRemoto={900}
+          />
         </figure>
       ) : (
         <div class="contacto__art" aria-hidden="true">

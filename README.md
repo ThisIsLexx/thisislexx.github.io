@@ -9,13 +9,12 @@ framework de estilos), estética **Bold Retro-Modernism**, desplegado en
   **campos de color a sangre**, secciones que ocupan todo el ancho de la
   pantalla y cuya alternancia marca el ritmo de la página. Titulares enormes en
   mayúsculas con interlínea 1.0, esquina viva, bordes de pelo y **ninguna
-  sombra**. Hay tema oscuro detrás del interruptor, pero el estilo es de base
-  clara.
+  sombra**. El sitio tiene un solo tema, el oscuro.
 - **Tipografías:** Clash Display para titulares (autoalojada en `public/fonts/`,
   licencia Fontshare libre para uso comercial) y Jost para el texto corrido
   (vía `@fontsource`). Ninguna hace peticiones a servidores de terceros.
-- **JavaScript:** solo el interruptor de tema claro/oscuro. Todo lo demás es
-  HTML y CSS.
+- **JavaScript:** el menú móvil, las entradas al hacer scroll y la línea de
+  Proceso. Todo lo demás es HTML y CSS.
 - **Contacto:** sin formulario ni backend — WhatsApp y `mailto:` directos.
 - **Peso del sitio compilado:** ~188 KB, fuentes incluidas.
 
@@ -83,12 +82,11 @@ src/
 │  ├─ brand.css          ← COLORES, TIPOGRAFÍA Y MEDIDAS (tu archivo de marca)
 │  └─ global.css         ← reset, tipografía base, botones, utilidades
 ├─ layouts/
-│  └─ BaseLayout.astro   ← <head>, SEO, Open Graph, JSON-LD, tema oscuro
+│  └─ BaseLayout.astro   ← <head>, SEO, Open Graph, JSON-LD
 ├─ components/
 │  ├─ Header.astro       ← barra fija con menú y botón de tema
 │  ├─ Hero.astro         ← titular y llamadas a la acción
 │  ├─ HeroArt.astro      ← tornamesa + ecualizador (CSS puro)
-│  ├─ Credits.astro      ← banda de créditos: artistas con los que has trabajado
 │  ├─ Services.astro     ← tarjetas de servicios
 │  ├─ Works.astro        ← portafolio
 │  ├─ Embed.astro        ← reproductor de Spotify / YouTube / SoundCloud
@@ -163,8 +161,9 @@ export const HERO = {
 };
 ```
 
-`imagen` acepta lo mismo que el resto del sitio: una ruta de `/public` o una
-URL completa, enlace de Google Drive incluido.
+`imagen` acepta lo mismo que el resto del sitio: una ruta `/img/...` (el
+archivo va en `src/assets/img/...`) o una URL completa, enlace de Google
+Drive incluido.
 
 #### Las dos fotos
 
@@ -173,14 +172,10 @@ hay dos versiones y el navegador elige: la vertical por debajo de 55 rem
 (880 px) y la apaisada por encima. **Si cambias la foto, cambia las dos.**
 Con `imagenMovil: ''` se usa la misma para todo, que también vale.
 
-Para generar las dos desde un original, con `sharp` (ya está instalado):
-
-```bash
-node -e "const s=require('sharp');s('MI-FOTO.jpg').resize({width:1800}).webp({quality:76}).toFile('public/img/hero/estudio-ancho.webp');s('MI-FOTO.jpg').resize({width:1000}).webp({quality:76}).toFile('public/img/hero/estudio-alto.webp')"
-```
-
-La foto del hero es lo primero y lo más pesado que carga la página: que pese
-**menos de 300 kB**. Las que hay ahora ocupan 120 kB y 71 kB.
+No hace falta reducirlas a mano: pon los dos recortes en `src/assets/img/hero/`
+al tamaño que tengas (cuanto más grandes, mejor calidad) y Astro genera las
+versiones AVIF y WebP a cada ancho al compilar. El teléfono descarga la
+vertical a su tamaño (unos 40 kB) y el escritorio la apaisada.
 
 #### La viñeta
 
@@ -197,18 +192,18 @@ como un fader que sube, y la palabra pasa de blanco a tinta. Está en el CSS
 de `src/components/Hero.astro` (`subir-fader`). Con "reducir movimiento"
 activado el bloque aparece ya lleno.
 
-### Banda de créditos
+### Créditos en la portada
 
-`src/components/Credits.astro` → array `artistas`. Son los nombres que
-aparecen bajo el hero, quietos y en grande, como los créditos de un disco.
+`src/config.ts` → `CREDITOS`. Son los artistas que aparecen en la portada,
+bajo los botones, como "Han grabado conmigo":
 
-```astro
-const artistas = ['CELG', 'OVAN', 'GustavoBK', 'Bleuss'];
+```ts
+export const CREDITOS = ['CELG', 'OVAN', 'GustavoBK', 'Bleuss'];
 ```
 
-Las figuras que los separan (cuadrado, círculo, triángulo) se reparten solas.
-Con más de seis u ocho nombres la línea empieza a partirse en dos; ahí conviene
-quedarse con los más reconocibles.
+Las figuras que los separan (cuadrado rojo, círculo azul, triángulo magenta)
+se reparten solas. Con más de seis u ocho nombres la línea se alarga demasiado;
+ahí conviene quedarse con los más reconocibles. Lista vacía = no se pinta.
 
 ### Servicios
 
@@ -333,7 +328,7 @@ cuerpo**, debajo del segundo `---`:
 nombre: Ana Ruiz
 proyecto: EP "Cardinal"
 rol: Cantautora                      # opcional
-foto: /img/clientes/ana.jpg          # opcional, ruta dentro de /public
+foto: /img/clientes/ana.jpg          # opcional; el archivo va en src/assets/img/clientes/
 rating: 5                            # 1 a 5
 orden: 1
 ---
@@ -342,8 +337,8 @@ a disco.
 ```
 
 Las fotos se muestran en círculo y en blanco y negro, para no romper la
-paleta. Van en `public/img/clientes/` y se referencian con ruta absoluta
-(`/img/...`). La retícula es de 3 columnas desde 48 rem (768 px), así que los
+paleta. Van en `src/assets/img/clientes/` y se referencian con ruta absoluta
+sin `src/assets` (`/img/clientes/...`). La retícula es de 3 columnas desde 48 rem (768 px), así que los
 testimonios lucen mejor en múltiplos de tres.
 
 ### Secciones con imágenes
@@ -354,9 +349,16 @@ como sin ellos.
 
 Hay dos maneras de poner una foto, y los cuatro campos aceptan las dos:
 
-- **Archivo en el repositorio** (recomendado). Va **dentro de `public/`** y se
-  escribe SIN la palabra `public`, empezando por barra: si el archivo está en
-  `public/img/estudio/cabina.jpg`, la ruta es `/img/estudio/cabina.jpg`.
+- **Archivo en el repositorio** (recomendado). Va **dentro de
+  `src/assets/img/`** y se escribe SIN `src/assets`, empezando por barra: si
+  el archivo está en `src/assets/img/estudio/cabina.jpg`, la ruta es
+  `/img/estudio/cabina.jpg`. Si la ruta está mal, la compilación se detiene y
+  dice qué archivo no encuentra.
+
+  Estas fotos se **optimizan solas al compilar**: Astro saca versiones AVIF y
+  WebP a varios anchos y cada pantalla descarga solo la que necesita. Sube el
+  JPG original del teléfono o la cámara, sin convertirlo ni reducirlo; las
+  fotos de la carpeta que ninguna página usa no se publican.
 - **Enlace externo**: pega la URL completa, incluido el enlace de "Compartir"
   de Google Drive. Está explicado en el punto 5 de aquí abajo.
 
@@ -382,32 +384,30 @@ El texto del bloque va aquí, en el cuerpo. Admite varios párrafos.
 La foto sale en gris y recupera el color al pasar el ratón. La figura Bauhaus
 se solapa con la esquina y gira 90° en el mismo gesto.
 
-#### 2. Sesiones — fotos bajo los bloques de Estudio
+#### 2. Sesiones — el muro de polaroids
 
-Un archivo por foto en `src/content/galeria/`. Salen en la misma sección
-que los bloques de Estudio, debajo, con el rótulo "Sesiones".
+Un archivo por foto en `src/content/galeria/`. Salen en la sección Estudio,
+debajo de los bloques, como un muro de polaroids: fotos pequeñas en marco de
+papel, cada una un poco girada y sujeta con una chincheta de color. Es el sitio
+para los momentos de sesión: artistas grabando, la consola a media mezcla,
+el equipo entre tomas. **Cuantas más, mejor se ve el muro.**
 
 ```yaml
 ---
 imagen: /img/galeria/sesion-01.jpg
 alt: Sesión de grabación de voces
-titulo: Sesión de voces   # opcional; es el pie que sube al pasar el ratón
-ancha: false              # true = ocupa dos columnas en pantallas grandes
-formato: apaisado         # apaisado (4:3) | vertical (3:4) | cuadrado | original
+titulo: Sesión de voces   # opcional; va escrito en el margen de la polaroid
 orden: 1
 ---
 ```
 
-**`formato` es el que evita los recortes.** El hueco de la retícula tiene una
-proporción fija y la foto se recorta para llenarlo, así que si metes una foto
-vertical en el hueco apaisado que viene por defecto, se quedan fuera la parte
-de arriba y la de abajo. Pon `formato: vertical` y el hueco se pone de pie.
-`original` respeta la proporción exacta de la foto y no recorta nada, a costa
-de que la retícula quede menos regular.
+Las polaroids se recortan **cuadradas** desde el centro de la foto, así que
+encuadra lo importante en medio. Los campos `ancha` y `formato` de los
+archivos antiguos ya no tienen efecto en el muro; puedes dejarlos o borrarlos.
 
-Las fotos van en gris bajo una veladura magenta que se retira al acercarse.
-El pie aparece al pasar el ratón; **en pantallas táctiles se queda siempre
-visible**, porque ahí no hay puntero y la información no puede depender de él.
+Van en gris y recuperan el color al pasar el ratón (en móvil, al cruzar el
+centro de la pantalla). Al pasar el ratón la polaroid además se endereza y se
+adelanta. El giro de cada una sale de la lista `GIROS` en `Studio.astro`.
 
 #### 3. Carátulas en los trabajos
 
@@ -466,8 +466,8 @@ Antes de montar la página entera sobre Drive, ten claro esto:
 Sirve muy bien para **probar** una foto sin hacer commit, o para algo temporal.
 Para las fotos definitivas, mejor una de estas, por orden de comodidad:
 
-1. **`public/img/`**, como el resto del sitio: viajan con el repositorio, se
-   publican con GitHub Pages y no dependen de nadie.
+1. **`src/assets/img/`**, como el resto del sitio: viajan con el repositorio,
+   se optimizan al compilar y no dependen de nadie.
 2. **Cloudinary o ImageKit** (plan gratis): te dan URL directa, redimensionan
    y sirven WebP solos. Pegas la URL en el mismo campo y ya está.
 3. **Un repositorio de GitHub servido por jsDelivr**
@@ -729,36 +729,16 @@ para Firefox y Chrome moderno, y `::-webkit-scrollbar` para Safari y los
 Chrome antiguos. Los colores salen de los tokens, así que se invierte con el
 tema igual que el resto.
 
-### Temas
+### Tema
 
-**El estilo es de base clara**, así que el tema claro es el de `:root` y no
-mira la preferencia del sistema: la identidad se ve igual para todo el mundo
-hasta que el visitante pida lo contrario. El oscuro vive detrás del
-interruptor de la barra superior y se recuerda en `localStorage`.
+**El sitio tiene un solo tema: el oscuro.** No hay interruptor ni se consulta
+la preferencia del sistema; la identidad se ve igual para todo el mundo.
 
-En `brand.css` son dos bloques: `:root[data-theme='dark']` y
-`:root[data-theme='light']`. El claro está por duplicado — en `:root` y en su
-propio bloque — para que el interruptor pueda volver a él desde el oscuro.
-
-Si añades un color, decláralo en **los dos** bloques, o se quedará igual al
-cambiar de tema.
-
-**Los campos de color no se invierten con el tema.** Un `.field-red` es rojo
-con texto blanco en los dos, porque un campo trae su propio texto encima y no
-necesita seguir a la página. Lo único que cambia entre temas es la superficie
-crema/carbón y las variantes `--color-*-text`.
-
-¿Prefieres respetar la preferencia del sistema? Duplica el bloque del tema
-oscuro dentro de:
-
-```css
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) { /* … los mismos tokens … */ }
-}
-```
-
-Si lo haces, cambia también el respaldo del interruptor en `Header.astro`: hoy
-es `'light'` fijo justamente porque `brand.css` no consulta el sistema.
+Los tokens viven en `:root` dentro de `brand.css`. Los nombres "tinta" y
+"papel" se conservan por su función, no por su color: `--brand-ink` es lo que
+dibuja (texto, líneas, marcos) y en oscuro es claro; `--brand-paper` es el
+fondo y es casi negro. `color-scheme: dark` hace que el navegador pinte en
+oscuro también lo que no dibujamos (controles, barras del sistema).
 
 ### Cambiar de tipografía
 
@@ -930,8 +910,7 @@ etiquetas o replantear la navegación.
 npm run build
 ```
 
-Revisa la sección nueva a 375 px y a 1440 px de ancho, y en tema claro y
-oscuro con el interruptor de la barra.
+Revisa la sección nueva a 375 px y a 1440 px de ancho.
 
 ---
 
@@ -1089,9 +1068,9 @@ al dominio raíz.
       placeholder).
 - [ ] Servicios, trabajos, testimonios y FAQ con contenido propio; sin
       quedar ninguno de ejemplo.
-- [ ] Artistas reales en `Credits.astro`.
+- [ ] Artistas reales en `CREDITOS` (`src/config.ts`).
 - [ ] `public/img/og.png` (1200 × 630 px) para compartir el enlace.
-- [ ] Fotos de clientes en `public/img/clientes/` y referenciadas en cada
+- [ ] Fotos de clientes en `src/assets/img/clientes/` y referenciadas en cada
       testimonio.
 - [ ] Bloques de Estudio con foto, o la sección no aparecerá.
 - [ ] Galería de sesiones con fotos, o la sección no aparecerá.

@@ -12,28 +12,69 @@
  * Todo lo editable (qué foto, cuánto se atenúa) vive en HERO, dentro
  * de src/config.ts.
  */
-import { SITE, HERO, waHref, mailHref } from '../config';
-import { resolverImagen } from '../lib/imagen';
+import { getImage } from 'astro:assets';
+import { SITE, HERO, CREDITOS, waHref, mailHref } from '../config';
+import { buscarFoto, type Foto } from '../lib/imagen';
 
-const foto = resolverImagen(HERO.imagen, 1800);
-const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
+const ancha = buscarFoto(HERO.imagen, 1800);
+const alta = HERO.imagenMovil.trim() ? buscarFoto(HERO.imagenMovil, 1000) : null;
+
+/* La portada lleva dirección de arte: un recorte vertical para el
+   móvil y otro apaisado para el resto, así que no basta con un
+   <Picture>, que solo sabe dar tamaños de UNA foto. Se piden a mano
+   las versiones AVIF y WebP de cada recorte y se montan como <source>
+   con su media query. Las fotos por enlace se usan tal cual. */
+const MOVIL = '(max-width: 54.99rem)';
+
+/** Figuras que separan los créditos, en el orden del logotipo */
+const FIGURAS = ['cuadrado', 'circulo', 'triangulo'] as const;
+
+async function fuentes(foto: Foto | null, anchos: number[], media?: string) {
+  if (!foto) return [];
+  if (foto.tipo === 'remota') return media ? [{ media, type: undefined, srcset: foto.url }] : [];
+
+  const validos = anchos.filter((w) => w <= foto.imagen.width);
+  const widths = validos.length ? validos : [foto.imagen.width];
+
+  return Promise.all(
+    (['avif', 'webp'] as const).map(async (format) => {
+      const version = await getImage({ src: foto.imagen, widths, format });
+      return { media, type: `image/${format}`, srcset: version.srcSet.attribute };
+    })
+  );
+}
+
+const fuentesMovil = await fuentes(alta, [640, 960, 1280], MOVIL);
+const fuentesAncha = await fuentes(ancha, [1280, 1600, 1920]);
+
+/* La <img> de respaldo: la apaisada en JPG, para el navegador que no
+   entienda ni AVIF ni WebP. */
+const respaldo =
+  ancha?.tipo === 'local'
+    ? (await getImage({ src: ancha.imagen, width: Math.min(1600, ancha.imagen.width), format: 'jpg' })).src
+    : ancha?.url ?? '';
 ---
 
 <section
-  class:list={['hero', { 'hero--con-foto': foto !== '' }]}
+  class:list={['hero', { 'hero--con-foto': ancha !== null }]}
   style={`--hero-encuadre: ${HERO.encuadre};
           --hero-oscurecer: ${HERO.oscurecer};
           --hero-vineta: ${HERO.vineta};
           --hero-saturacion: ${HERO.saturacion};`}
 >
   {
-    foto !== '' && (
+    ancha !== null && (
       <div class="hero__fondo" aria-hidden="true">
         <picture>
-          {fotoMovil !== foto && <source media="(max-width: 54.99rem)" srcset={fotoMovil} />}
+          {fuentesMovil.map((f) => (
+            <source media={f.media} type={f.type} srcset={f.srcset} sizes="100vw" />
+          ))}
+          {fuentesAncha.map((f) => (
+            <source type={f.type} srcset={f.srcset} sizes="100vw" />
+          ))}
           {/* fetchpriority alto: es la imagen más grande de la primera
               pantalla, así que es la que decide la nota de carga. */}
-          <img src={foto} alt="" fetchpriority="high" decoding="async" />
+          <img src={respaldo} alt="" fetchpriority="high" decoding="async" />
         </picture>
         <div class="hero__velo"></div>
       </div>
@@ -64,6 +105,23 @@ const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
       <p class="hero__meta muted">
         Respuesta en menos de 48 h
       </p>
+
+      {/* Créditos: la prueba social junto a la acción, dentro de la
+          portada, en vez de una banda aparte que cortaba el paso del
+          hero a Trabajos. */}
+      {CREDITOS.length > 0 && (
+        <div class="creditos">
+          <p class="creditos__titulo" id="creditos-titulo">Han grabado conmigo</p>
+          <ul class="creditos__lista" role="list" aria-labelledby="creditos-titulo">
+            {CREDITOS.map((nombre, i) => (
+              <li class="credito">
+                <span class="credito__nombre">{nombre}</span>
+                <i class:list={['figura', `figura--${FIGURAS[i % FIGURAS.length]}`]} aria-hidden="true" />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   </div>
 </section>
@@ -255,6 +313,82 @@ const fotoMovil = resolverImagen(HERO.imagenMovil, 1000) || foto;
     letter-spacing: var(--tracking-label);
     text-transform: uppercase;
   }
+
+  /* ── Créditos ──────────────────────────────────────────────────
+     Un renglón al pie del texto de la portada: rótulo pequeño con una
+     raya delante y los nombres en Clash, separados por las figuras
+     del logotipo en sus tres colores. Separado del bloque de botones
+     por más aire que el que hay entre botones y meta: es otro grupo. */
+  .creditos { margin-block-start: var(--space-5); }
+
+  .creditos__titulo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--step-xs);
+    font-weight: 600;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .creditos__titulo::before {
+    content: '';
+    inline-size: 2rem;
+    block-size: 2px;
+    background: currentColor;
+  }
+
+  .creditos__lista {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .credito {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .credito__nombre {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1rem, 0.9rem + 0.4vw, 1.25rem);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .figura {
+    display: block;
+    flex: none;
+    inline-size: 0.6rem;
+    block-size: 0.6rem;
+    transition: transform 450ms var(--ease-out);
+  }
+
+  .figura--cuadrado { background: var(--color-accent); }
+  .figura--circulo { background: var(--color-accent-2); border-radius: 50%; }
+
+  .figura--triangulo {
+    inline-size: 0;
+    block-size: 0;
+    border-inline: 0.35rem solid transparent;
+    border-block-end: 0.6rem solid var(--color-accent-3);
+  }
+
+  .credito:last-child .figura { display: none; }
+
+  /* Con ratón, la figura que sigue al nombre gira un cuarto de vuelta */
+  @media (hover: hover) {
+    .credito:hover .figura { transform: rotate(90deg); }
+  }
+
+  .hero--con-foto .creditos { text-shadow: 0 2px 18px rgb(0 0 0 / 0.55); }
 
   @media (width >= 55rem) {
     .hero--con-foto { min-block-size: min(80svh, 46rem); }

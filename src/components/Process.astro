@@ -120,10 +120,10 @@ const pasos = [
     inline-size: var(--border-w-thick);
     background: var(--paso-c);
     transform-origin: top;
-    /* Lento a propósito: cada tramo tarda más de un segundo y el
-       siguiente espera a que el anterior vaya por la mitad, así se
-       lee como un recorrido y no como un parpadeo. */
-    transition: transform 1400ms cubic-bezier(0.45, 0, 0.2, 1) calc(var(--i) * 700ms);
+    /* Al ritmo del resto de la página: cada tramo tarda lo que una
+       entrada de foto y el siguiente arranca antes de que acabe, así
+       la línea se lee como un recorrido sin hacerse esperar. */
+    transition: transform 700ms cubic-bezier(0.45, 0, 0.2, 1) calc(var(--i) * 220ms);
   }
 
   .linea--viva .paso:not(.alcanzado)::after { transform: scaleY(0); }
@@ -136,7 +136,7 @@ const pasos = [
     line-height: 0.9;
     color: var(--paso-c);
     font-variant-numeric: tabular-nums;
-    transition: color 600ms ease calc(var(--i) * 700ms + 500ms);
+    transition: color 400ms ease calc(var(--i) * 220ms + 300ms);
   }
 
   /* Hasta que el paso no se alcanza, su número espera en tinta suave:

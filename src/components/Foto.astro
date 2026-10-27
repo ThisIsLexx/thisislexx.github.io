@@ -1,0 +1,71 @@
+---
+/**
+ * FOTO — Una imagen de contenido, optimizada cuando se puede.
+ *
+ * Si la ruta es local (/img/...), Astro genera al compilar versiones
+ * en AVIF y WebP a los anchos de `widths`, y con `sizes` el navegador
+ * elige la más pequeña que llena el hueco: un teléfono no descarga la
+ * foto de escritorio. También escribe el ancho y el alto reales, para
+ * que la página reserve el sitio antes de que llegue la foto.
+ *
+ * Si es un enlace (Drive, Dropbox, otra web), se pinta tal cual con
+ * un <img> normal: lo que no está en el proyecto no se puede procesar.
+ *
+ * Los atributos que no son de aquí (class, data-*, el identificador de
+ * estilos del componente padre) pasan directos a la <img>, así que el
+ * CSS que el padre escribe para "su" img sigue funcionando.
+ */
+import { Picture } from 'astro:assets';
+import { buscarFoto } from '../lib/imagen';
+
+interface Props {
+  src: string | undefined;
+  alt: string;
+  /** Anchos a generar, en píxeles. Los que superen el original se descartan. */
+  widths: number[];
+  /** Cuánto mide la foto en pantalla, en sintaxis de `sizes`. */
+  sizes: string;
+  /** Ancho que se le pide a Drive cuando la foto es un enlace. */
+  anchoRemoto?: number;
+  loading?: 'lazy' | 'eager';
+  [atributo: string]: unknown;
+}
+
+const { src, alt, widths, sizes, anchoRemoto = 1600, loading = 'lazy', ...resto } = Astro.props;
+
+const foto = buscarFoto(src, anchoRemoto);
+
+// Nunca se agranda una foto: si todos los anchos pedidos superan al
+// original, se sirve el original y nada más. El mayor de los anchos
+// es también el de la <img> de respaldo: sin él, Picture la deja al
+// tamaño original y en dist/ acaban JPG de varios megas.
+const anchos =
+  foto?.tipo === 'local'
+    ? (() => {
+        const validos = widths.filter((w) => w <= foto.imagen.width);
+        return validos.length ? validos : [foto.imagen.width];
+      })()
+    : [];
+---
+
+{
+  foto?.tipo === 'local' && (
+    <Picture
+      src={foto.imagen}
+      alt={alt}
+      widths={anchos}
+      sizes={sizes}
+      width={Math.max(...anchos)}
+      formats={['avif', 'webp']}
+      fallbackFormat="jpg"
+      loading={loading}
+      decoding="async"
+      {...resto}
+    />
+  )
+}
+{
+  foto?.tipo === 'remota' && (
+    <img src={foto.url} alt={alt} loading={loading} decoding="async" {...resto} />
+  )
+}

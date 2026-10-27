@@ -2,7 +2,7 @@
 # Una foto por archivo. Duplica este archivo para añadir más.
 # imagen: /img/galeria/sesion-01.jpg
 # También vale un enlace de Compartir de Google Drive (ver README):
-imagen: /img/galeria/piano.webp
+imagen: /img/galeria/piano.jpg
 alt: Sesión de grabación de voces
 titulo: Sesión de voces
 ancha: false

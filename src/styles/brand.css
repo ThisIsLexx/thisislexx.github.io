@@ -4,20 +4,31 @@
    visual del sitio: colores, tipografías, grosores y ritmo.
    Paleta: geometría Bauhaus con triada rojo · magenta · azul,
    sobre neutros de tinta y papel.
+
+   El sitio tiene UN solo tema, el oscuro. Los nombres "tinta" y
+   "papel" se conservan por su papel, no por su color: tinta es lo
+   que dibuja (texto, líneas, marcos) y papel es el fondo. En oscuro
+   la tinta es clara y el papel casi negro.
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
+  /* Que el navegador pinte en oscuro lo que no dibujamos nosotros:
+     controles de formulario, barras del sistema, autocompletado. */
+  color-scheme: dark;
+
   /* ── 1. COLORES DE MARCA ─────────────────────────────────────
      Triada de marca: rojo · magenta · azul. Cambia estos tres
      HEX y todo el sitio se recolorea (botones, formas, acentos). */
-  --brand-red: #cc1a12;
-  --brand-magenta: #c2186f;
-  --brand-blue: #0b4ea2;
+  /* La triada va un punto más clara que en impresión para mantener
+     contraste AA sobre el fondo oscuro. */
+  --brand-red: #ff4a3d;
+  --brand-magenta: #ff5cb0;
+  --brand-blue: #4d8ee6;
 
-  /* Neutros: "tinta" (casi negro) y "papel" (blanco cálido).
-     El Bauhaus nunca usa negro puro ni blanco puro.             */
-  --brand-ink: #16130f;
-  --brand-paper: #f2efe6;
+  /* Neutros: "tinta" (blanco cálido, lo que dibuja) y "papel" (casi
+     negro, el fondo). El Bauhaus nunca usa negro ni blanco puros. */
+  --brand-ink: #f2efe6;
+  --brand-paper: #14120f;
 
   /* Neutros FIJOS: no se invierten con el tema. Los usa el texto
      que va encima de un color de marca, donde el contraste lo
@@ -26,17 +37,15 @@
   --paper-fixed: #f2efe6;
 
   /* La triada en su versión clara, también FIJA. La usan los bloques
-     que siempre tienen fondo oscuro pase lo que pase con el tema,
-     como el hero sobre la fotografía: ahí el rojo oscuro del modo
-     claro se hunde en la foto y hay que subirlo.                   */
+     que siempre van sobre fondo oscuro, como el hero sobre la foto. */
   --red-fixed: #ff4a3d;
   --magenta-fixed: #ff5cb0;
   --blue-fixed: #4d8ee6;
   --ink-soft-fixed: #b3aca0;
 
   /* Variantes de apoyo (derivadas, rara vez las tocarás) */
-  --brand-ink-soft: #4a443c;
-  --brand-paper-dim: #e4dfd2;
+  --brand-ink-soft: #a8a196;
+  --brand-paper-dim: #221e18;
   --brand-line: var(--brand-ink);
 
   /* ── 2. ROLES SEMÁNTICOS ─────────────────────────────────────
@@ -48,8 +57,8 @@
   --color-accent: var(--brand-red);       /* CTA principal, énfasis */
   --color-accent-2: var(--brand-blue);    /* Secciones alternas     */
   --color-accent-3: var(--brand-magenta); /* Destacados, highlight  */
-  --color-on-accent: var(--brand-paper);  /* Texto sobre rojo/azul  */
-  --color-on-magenta: var(--paper-fixed); /* Texto sobre magenta    */
+  --color-on-accent: var(--ink-fixed);    /* Texto sobre rojo/azul  */
+  --color-on-magenta: var(--ink-fixed);   /* Texto sobre magenta    */
   --color-focus: var(--brand-blue);
 
   /* ── 3. TIPOGRAFÍA ───────────────────────────────────────────
@@ -126,47 +135,4 @@
   /* Para las figuras que giran al realzar: frenada larga y limpia,
      sin rebote. */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* ── 5. MODO OSCURO ────────────────────────────────────────────
-   Se invierten tinta y papel; los primarios se aclaran un punto
-   para mantener contraste AA sobre fondo oscuro.                */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --brand-ink: #f2efe6;
-    --brand-paper: #14120f;
-    --brand-ink-soft: #a8a196;
-    --brand-paper-dim: #221e18;
-    --brand-red: #ff4a3d;
-    --brand-magenta: #ff5cb0;
-    --brand-blue: #4d8ee6;
-    --color-on-accent: #14120f;
-    --color-on-magenta: var(--ink-fixed);
-    --shadow-hard: 8px 8px 0 var(--brand-ink);
-  }
-}
-
-/* Interruptor manual (data-theme en <html>) gana sobre el sistema */
-:root[data-theme='dark'] {
-  --brand-ink: #f2efe6;
-  --brand-paper: #14120f;
-  --brand-ink-soft: #a8a196;
-  --brand-paper-dim: #221e18;
-  --brand-red: #ff4a3d;
-  --brand-magenta: #ff5cb0;
-  --brand-blue: #4d8ee6;
-  --color-on-accent: #14120f;
-  --color-on-magenta: var(--ink-fixed);
-}
-
-:root[data-theme='light'] {
-  --brand-ink: #16130f;
-  --brand-paper: #f2efe6;
-  --brand-ink-soft: #4a443c;
-  --brand-paper-dim: #e4dfd2;
-  --brand-red: #cc1a12;
-  --brand-magenta: #c2186f;
-  --brand-blue: #0b4ea2;
-  --color-on-accent: #f2efe6;
-  --color-on-magenta: var(--paper-fixed);
 }

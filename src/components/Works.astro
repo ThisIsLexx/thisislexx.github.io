@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Embed from './Embed.astro';
-import { resolverImagen } from '../lib/imagen';
+import Foto from './Foto.astro';
 
 const trabajos = (await getCollection('trabajos'))
   .sort((a, b) => a.data.orden - b.data.orden)
@@ -31,11 +31,12 @@ const trabajos = (await getCollection('trabajos'))
 
             {t.data.portada && (
               <figure class="work__portada">
-                <img
-                  src={resolverImagen(t.data.portada, 1000)}
+                <Foto
+                  src={t.data.portada}
                   alt={t.data.portadaAlt ?? ''}
-                  loading="lazy"
-                  decoding="async"
+                  widths={[400, 640, 960]}
+                  sizes="(min-width: 55rem) 50vw, 100vw"
+                  anchoRemoto={1000}
                 />
               </figure>
             )}

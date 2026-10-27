@@ -28,7 +28,7 @@ export const CONTACT = {
   emailSubject: 'Cotización de producción musical',
   emailBody:
     'Hola Lexx,\n\nMi proyecto es:\nGénero:\nCanciones:\nFecha límite:\nPresupuesto aproximado:\n\nGracias.',
-  /** Retrato para la sección de contacto. Ruta en /public
+  /** Retrato para la sección de contacto. Ruta /img/... (el archivo va en src/assets/img/...)
       (por ejemplo '/img/contacto/retrato.webp') o URL completa, igual
       que el resto de imágenes. Vacío = se quedan las figuras de colores. */
   retrato: '/img/contacto/retrato.webp',
@@ -44,7 +44,7 @@ export const CONTACT = {
  * ─────────────────────────────────────────────────────────────
  */
 export const HERO = {
-  /** Foto de fondo. Ruta en /public o URL completa (vale un enlace
+  /** Foto de fondo. Ruta /img/... (archivo en src/assets/img/...) o URL completa (vale un enlace
       de Google Drive, ver README). Vacío = fondo liso, sin foto. */
   imagen: '/img/hero/estudio-ancho.webp',
   /** Versión vertical para móviles. Un recorte apaisado en una
@@ -61,6 +61,15 @@ export const HERO = {
       Bajarlo apaga el color sin oscurecer, que es lo que hace 'oscurecer'. */
   saturacion: 0.72,
 } as const;
+
+/**
+ * Artistas con los que has trabajado. Salen en la portada, bajo los
+ * botones, como "Han grabado conmigo". Las figuras que los separan
+ * (cuadrado, círculo, triángulo) se reparten solas. Con más de seis u
+ * ocho nombres la línea se alarga demasiado: quédate con los más
+ * reconocibles. Lista vacía = la línea no se pinta.
+ */
+export const CREDITOS = ['CELG', 'OVAN', 'GustavoBK', 'Bleuss'];
 
 export const SOCIAL = [
   { label: 'Instagram', url: 'https://www.instagram.com/_thisislexx_/' },

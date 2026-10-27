@@ -102,6 +102,12 @@ body {
 }
 
 img, svg, video, iframe { display: block; max-width: 100%; }
+
+/* Las fotos optimizadas llegan dentro de un <picture> que solo existe
+   para ofrecer AVIF y WebP. Que no cuente para la maquetación: así la
+   <img> sigue siendo hija directa de su marco, rejilla o flex, igual
+   que cuando no había <picture>. */
+picture { display: contents; }
 img, video { height: auto; }
 input, button, textarea, select { font: inherit; color: inherit; }
 
@@ -191,10 +197,6 @@ a {
   position: relative;
   overflow: hidden; /* contiene las formas decorativas */
 }
-
-/* La banda de créditos ya cierra con su propia línea gruesa: si la
-   sección de debajo trajera la suya, saldrían dos rayas pegadas. */
-.creditos + .section { border-top: 0; }
 
 /* Entradilla bajo el titular de sección: pegada a él, pero sin tocarlo */
 .section h2 + .lead { margin-block-start: var(--space-3); }

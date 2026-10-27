@@ -28,7 +28,7 @@ const testimonios = defineCollection({
     nombre: z.string(),
     proyecto: z.string(),
     rol: z.string().optional(),
-    /** Ruta dentro de /public (/img/clientes/ana.jpg) o URL completa,
+    /** Ruta /img/clientes/ana.jpg (archivo en src/assets/img/clientes/) o URL completa,
         incluido un enlace de compartir de Google Drive. Ver README. */
     foto: z.string().optional(),
     rating: z.number().min(1).max(5).default(5),
@@ -48,7 +48,7 @@ const trabajos = defineCollection({
     plataforma: z.enum(['spotify', 'youtube', 'soundcloud']),
     /** Solo el ID/URI, no la URL completa. Ver README. */
     embedId: z.string(),
-    /** Carátula: ruta dentro de /public (/img/trabajos/ep.jpg) o URL
+    /** Carátula: ruta /img/trabajos/ep.jpg (archivo en src/assets/img/trabajos/) o URL
         completa, incluido un enlace de compartir de Google Drive.
         Si se deja vacío, la tarjeta se queda solo con el reproductor. */
     portada: z.string().optional(),
@@ -86,7 +86,7 @@ const estudio = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/estudio' }),
   schema: z.object({
     titulo: z.string(),
-    /** Ruta dentro de /public (/img/estudio/cabina.jpg) o URL completa,
+    /** Ruta /img/estudio/cabina.jpg (archivo en src/assets/img/estudio/) o URL completa,
         incluido un enlace de compartir de Google Drive. Ver README.
         Mientras esté vacía, el bloque no se pinta. */
     imagen: z.string().default(''),
@@ -104,7 +104,7 @@ const estudio = defineCollection({
 const galeria = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/galeria' }),
   schema: z.object({
-    /** Ruta dentro de /public o URL completa, incluido un enlace de
+    /** Ruta /img/... (archivo en src/assets/img/...) o URL completa, incluido un enlace de
         compartir de Google Drive. Vacía = no se pinta. */
     imagen: z.string().default(''),
     alt: z.string().default(''),

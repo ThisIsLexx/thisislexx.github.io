@@ -8,7 +8,7 @@
  * firma debajo. Un archivo en src/content/testimonios/ = una cita.
  */
 import { getCollection, render } from 'astro:content';
-import { resolverImagen } from '../lib/imagen';
+import Foto from './Foto.astro';
 
 const entries = (await getCollection('testimonios')).sort(
   (a, b) => a.data.orden - b.data.orden
@@ -33,7 +33,7 @@ const testimonios = await Promise.all(
               </blockquote>
               <figcaption class="cita__firma">
                 {data.foto && (
-                  <img src={resolverImagen(data.foto, 112)} alt="" width="56" height="56" loading="lazy" />
+                  <Foto src={data.foto} alt="" widths={[56, 112, 168]} sizes="56px" anchoRemoto={168} />
                 )}
                 <span>
                   <span class="cita__nombre">{data.nombre}</span>
