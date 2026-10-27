@@ -1,4 +1,13 @@
 ---
+/**
+ * PROCESO — Cuatro pasos sobre una línea de tiempo.
+ *
+ * Cada paso tiene su tramo de raya en su color. Al bajar por la
+ * página, los tramos se rellenan en orden, de izquierda a derecha
+ * (de arriba abajo en móvil): el recorrido del proyecto avanza con
+ * el del visitante. Sin JavaScript, o con "reducir movimiento", la
+ * línea se ve ya completa.
+ */
 const pasos = [
   {
     titulo: 'El concepto',
@@ -21,18 +30,17 @@ const pasos = [
     color: 'ink',
   },
 ];
-
 ---
 
-<section class="section" id="proceso">
+<section class="section proceso" id="proceso">
   <div class="wrap">
     <h2 class="reveal">Cuatro pasos,<br />cero sorpresas</h2>
 
-    <ol class="steps" role="list">
+    <ol class="linea" role="list" data-linea>
       {
         pasos.map((p, i) => (
-          <li class:list={['step', `step--${p.color}`, 'reveal']} data-foco>
-            <span class="step__n">{String(i + 1).padStart(2, '0')}</span>
+          <li class:list={['paso', `paso--${p.color}`]} style={`--i: ${i}`}>
+            <span class="paso__n">{String(i + 1).padStart(2, '0')}</span>
             <h3>{p.titulo}</h3>
             <p>{p.texto}</p>
           </li>
@@ -42,74 +50,135 @@ const pasos = [
   </div>
 </section>
 
+<script>
+  /* Marca como alcanzado cada paso cuyo borde de arriba ya pasó del
+     55% de la pantalla, y lo desmarca si se vuelve a subir. Lo que
+     queda por encima de la pantalla cuenta como alcanzado. */
+  const pasos = document.querySelectorAll<HTMLElement>('[data-linea] > .paso');
+
+  if (pasos.length && 'IntersectionObserver' in window) {
+    document.querySelector('[data-linea]')?.classList.add('linea--viva');
+
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        for (const e of entradas) {
+          const pasado = e.isIntersecting || e.boundingClientRect.top < 0;
+          e.target.classList.toggle('alcanzado', pasado);
+        }
+      },
+      { rootMargin: '0px 0px -45% 0px', threshold: 0 }
+    );
+
+    for (const paso of pasos) observador.observe(paso);
+  }
+</script>
+
 <style>
-  .steps {
+  .proceso { background: var(--brand-paper-dim); }
+
+  .linea {
     list-style: none;
     padding: 0;
     margin-block-start: var(--space-5);
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--gap-cards);
+    gap: var(--space-4);
   }
 
-  .step {
-    padding: var(--space-4) var(--space-3);
-    border: var(--border-w) solid var(--brand-ink);
+  .paso--red { --paso-c: var(--brand-red); }
+  .paso--blue { --paso-c: var(--brand-blue); }
+  .paso--magenta { --paso-c: var(--brand-magenta); }
+  .paso--ink { --paso-c: var(--brand-ink); }
+
+  /* El tramo: una raya fina de tinta (::before) y, encima, el relleno
+     grueso en el color del paso (::after). En móvil la línea corre en
+     vertical por la izquierda; en ancho, en horizontal por arriba. */
+  .paso {
     position: relative;
-    transition:
-      background-color var(--transition-lento),
-      color var(--transition-lento),
-      box-shadow var(--transition-lento);
+    padding-inline-start: var(--space-4);
   }
 
-  .step__n { transition: color var(--transition-lento), transform 340ms var(--ease-out); }
-  .step p { transition: color var(--transition-lento); }
-
-  /* Efectos de realce. Se encienden con el ratón y, en pantallas sin
-     ratón, con la clase .en-foco que pone el scroll (src/scripts/foco.ts):
-     lo que pasa por el centro de la pantalla es lo que está vivo. */
-  /* El paso se rellena con su propio color de franja */
-  .step:is(:hover, .en-foco) {
-    background: var(--step-c);
-    color: var(--step-fg);
-    box-shadow: var(--shadow-hard);
-  }
-  .step:is(:hover, .en-foco) .step__n { color: var(--step-fg); transform: translateY(-4px); }
-  .step:is(:hover, .en-foco) p { color: var(--step-fg); }
-
-  /* Franja de color de 8px en el borde superior de cada paso */
-  .step::before {
+  .paso::before,
+  .paso::after {
     content: '';
     position: absolute;
-    inset-block-start: 0;
-    inset-inline: 0;
-    block-size: 8px;
-    background: var(--step-c);
+    inset-block: 0 calc(var(--space-4) * -1);
+    inset-inline-start: 0;
   }
 
-  .step--red { --step-c: var(--brand-red); --step-fg: var(--color-on-accent); }
-  .step--blue { --step-c: var(--brand-blue); --step-fg: var(--color-on-accent); }
-  .step--magenta { --step-c: var(--brand-magenta); --step-fg: var(--color-on-magenta); }
-  .step--ink { --step-c: var(--brand-ink); --step-fg: var(--brand-paper); }
+  .paso:last-child::before,
+  .paso:last-child::after { inset-block-end: 0; }
 
-  .step__n {
-    font-family: var(--font-display);
-    font-size: var(--step-2);
-    color: var(--step-c);
+  .paso::before {
+    inline-size: var(--border-w);
+    inset-inline-start: calc((var(--border-w-thick) - var(--border-w)) / 2);
+    background: var(--brand-ink);
+    opacity: 0.25;
+  }
+
+  .paso::after {
+    inline-size: var(--border-w-thick);
+    background: var(--paso-c);
+    transform-origin: top;
+    /* Lento a propósito: cada tramo tarda más de un segundo y el
+       siguiente espera a que el anterior vaya por la mitad, así se
+       lee como un recorrido y no como un parpadeo. */
+    transition: transform 1400ms cubic-bezier(0.45, 0, 0.2, 1) calc(var(--i) * 700ms);
+  }
+
+  .linea--viva .paso:not(.alcanzado)::after { transform: scaleY(0); }
+
+  .paso__n {
     display: block;
-    line-height: 1;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--step-3);
+    line-height: 0.9;
+    color: var(--paso-c);
+    font-variant-numeric: tabular-nums;
+    transition: color 600ms ease calc(var(--i) * 700ms + 500ms);
   }
 
-  .step h3 {
-    margin-block: var(--space-2) var(--space-2);
+  /* Hasta que el paso no se alcanza, su número espera en tinta suave:
+     así se lee cuál viene después. */
+  .linea--viva .paso:not(.alcanzado) .paso__n { color: var(--color-muted); }
+
+  .paso h3 {
+    margin-block: var(--space-2);
     font-size: var(--step-card);
   }
-  .step p { font-size: var(--step-sm); color: var(--color-muted); }
 
-  /* Dos columnas y no cuatro: el contenedor tope en 78rem, así que
-     una fila de 4 deja solo ~204px útiles por tarjeta y cualquier
-     palabra de 13 letras o más se parte. Con 2 sobra el ancho. */
-  @media (width >= 34rem) {
-    .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .paso p { font-size: var(--step-sm); color: var(--color-muted); }
+
+  @media (width >= 55rem) {
+    .linea {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0;
+    }
+
+    .paso {
+      padding-inline: 0 var(--space-4);
+      padding-block-start: var(--space-4);
+    }
+
+    .paso::before,
+    .paso::after {
+      inset-block: 0 auto;
+      inset-inline: 0;
+    }
+
+    .paso::before {
+      inline-size: auto;
+      block-size: var(--border-w);
+      inset-block-start: calc((var(--border-w-thick) - var(--border-w)) / 2);
+    }
+
+    .paso::after {
+      inline-size: auto;
+      block-size: var(--border-w-thick);
+      transform-origin: left;
+    }
+
+    .linea--viva .paso:not(.alcanzado)::after { transform: scaleX(0); }
   }
 </style>

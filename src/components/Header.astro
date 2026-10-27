@@ -2,15 +2,16 @@
 import { getCollection } from 'astro:content';
 import { SITE, NAV, waHref } from '../config';
 
-/* Estudio y Sesiones solo se pintan si su colección trae alguna
-   imagen, así que sus enlaces del menú se esconden hasta entonces.
-   Sin esto el menú ofrecería un ancla que no existe en la página. */
+/* La sección Estudio solo se pinta si sus bloques o sus fotos de
+   sesión traen alguna imagen, así que su enlace del menú se esconde
+   hasta entonces. Sin esto el menú ofrecería un ancla que no existe. */
 const conImagen = async (nombre: 'estudio' | 'galeria') =>
   (await getCollection(nombre)).some((e) => e.data.imagen.trim() !== '');
 
+const galeria = await conImagen('galeria');
 const disponible = {
-  estudio: await conImagen('estudio'),
-  galeria: await conImagen('galeria'),
+  estudio: (await conImagen('estudio')) || galeria,
+  galeria,
 };
 
 const nav = NAV.filter((item) => !item.requiere || disponible[item.requiere]);

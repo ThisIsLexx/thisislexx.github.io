@@ -1,4 +1,15 @@
 ---
+/**
+ * SERVICIOS — Una carta de precios, no cuatro tarjetas iguales.
+ *
+ * El primer servicio (el de menor `orden`, hoy "La combi completa")
+ * es el destacado: un bloque grande en su color, con todo lo que
+ * incluye y el precio a tamaño de titular. El resto va al lado como
+ * una lista de precios, una fila por servicio. Así la página dice
+ * cuál es la apuesta y deja comparar el resto de un vistazo.
+ *
+ * Un archivo en src/content/servicios/ = un servicio.
+ */
 import { getCollection } from 'astro:content';
 import { waHref } from '../config';
 import Shape from './Shape.astro';
@@ -6,41 +17,74 @@ import Shape from './Shape.astro';
 const servicios = (await getCollection('servicios')).sort(
   (a, b) => a.data.orden - b.data.orden
 );
+
+const [destacado, ...resto] = servicios;
 ---
 
 <section class="section" id="servicios">
   <div class="wrap">
     <header class="cabecera">
       <h2 class="reveal">Lo que hago</h2>
-      <p class="lead muted reveal">
+      <p class="lead muted">
         Puedes contratar servicios individuales o el paquete completo.
         Los precios son de referencia por canción, pero estos pueden variar; el presupuesto final
         depende del alcance.
       </p>
     </header>
 
-    <ul class="grid" role="list">
-      {
-        servicios.map((s) => (
-          <li class:list={['card', `card--${s.data.color}`, 'reveal']} data-foco>
-            <Shape tipo={s.data.figura} color={s.data.color === 'ink' ? 'paper' : 'ink'} size="2.5rem" />
-            <h3>{s.data.titulo}</h3>
-            <p class="card__desc">{s.data.resumen}</p>
+    <div class="carta">
+      {destacado && (
+        <article class:list={['destacado', `destacado--${destacado.data.color}`]}>
+          <Shape
+            tipo={destacado.data.figura}
+            color={destacado.data.color === 'ink' ? 'paper' : 'ink'}
+            size="clamp(3rem, 6vw, 4.5rem)"
+          />
+          <h3>{destacado.data.titulo}</h3>
+          <p class="destacado__resumen">{destacado.data.resumen}</p>
 
-            <ul class="feats" role="list">
-              {s.data.incluye.map((f) => <li>{f}</li>)}
-            </ul>
+          <ul class="destacado__incluye" role="list">
+            {destacado.data.incluye.map((f) => <li>{f}</li>)}
+          </ul>
 
-            <div class="card__foot">
-              {s.data.desde && <p class="price">Desde <b>{s.data.desde}</b></p>}
-              {s.data.entrega && <p class="eta">Entrega {s.data.entrega}</p>}
+          <div class="destacado__pie">
+            {destacado.data.desde && (
+              <p class="precio">
+                <span class="precio__desde">Desde</span>
+                <span class="precio__cifra">{destacado.data.desde}</span>
+              </p>
+            )}
+            {destacado.data.entrega && <p class="entrega">Entrega {destacado.data.entrega}</p>}
+          </div>
+        </article>
+      )}
+
+      <ul class="lista" role="list">
+        {resto.map((s) => (
+          <li class="fila">
+            <Shape tipo={s.data.figura} color={s.data.color} size="1.75rem" class="fila__figura" />
+
+            <div class="fila__texto">
+              <h3>{s.data.titulo}</h3>
+              <p class="fila__resumen">{s.data.resumen}</p>
+              <p class="fila__incluye">{s.data.incluye.join(' · ')}</p>
+            </div>
+
+            <div class="fila__precio">
+              {s.data.desde && (
+                <p class="precio">
+                  <span class="precio__desde">Desde</span>
+                  <span class="precio__cifra">{s.data.desde}</span>
+                </p>
+              )}
+              {s.data.entrega && <p class="entrega">Entrega {s.data.entrega}</p>}
             </div>
           </li>
-        ))
-      }
-    </ul>
+        ))}
+      </ul>
+    </div>
 
-    <a class="btn btn--magenta reveal" href={waHref} target="_blank" rel="noopener">
+    <a class="btn btn--magenta" href={waHref} target="_blank" rel="noopener">
       Pedir cotización
     </a>
   </div>
@@ -49,7 +93,7 @@ const servicios = (await getCollection('servicios')).sort(
 <style>
   /* En ancho, el titular y la entradilla van lado a lado y apoyados en
      la misma línea base: la entradilla deja de ser un párrafo suelto
-     entre el titular y las tarjetas, y la sección gana una fila. */
+     entre el titular y la carta, y la sección gana una fila. */
   @media (width >= 60rem) {
     .cabecera {
       display: grid;
@@ -61,82 +105,132 @@ const servicios = (await getCollection('servicios')).sort(
     .cabecera .lead { margin: 0; justify-self: end; max-inline-size: 40ch; }
   }
 
-  .grid {
+  .carta {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--gap-cards);
-    margin-block: var(--space-5) var(--space-4);
-    padding: 0;
-    list-style: none;
+    gap: var(--space-5);
+    margin-block: var(--space-5);
   }
 
-  .card {
+  /* ── El destacado ──────────────────────────────────────────────── */
+  .destacado {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
-    padding: var(--space-4) var(--space-3);
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--d-bg);
+    color: var(--d-fg);
     border: var(--border-w) solid var(--brand-ink);
-    background: var(--card-bg, transparent);
-    color: var(--card-fg, inherit);
-    transition:
-      transform var(--transition),
-      box-shadow var(--transition);
-  }
-
-  .card :global(.shape) {
-    transition: transform 450ms var(--ease-out);
-  }
-
-  /* Solo en dispositivos con puntero real: en táctil el :hover se
-     queda pegado después de tocar. */
-  /* Efectos de realce. Se encienden con el ratón y, en pantallas sin
-     ratón, con la clase .en-foco que pone el scroll (src/scripts/foco.ts):
-     lo que pasa por el centro de la pantalla es lo que está vivo. */
-  .card:is(:hover, .en-foco) {
-    transform: translate(-5px, -5px);
     box-shadow: var(--shadow-hard);
-    z-index: 1;
   }
 
-  .card:is(:hover, .en-foco) :global(.shape) { transform: rotate(90deg) scale(1.15); }
+  .destacado--red { --d-bg: var(--brand-red); --d-fg: var(--color-on-accent); }
+  .destacado--blue { --d-bg: var(--brand-blue); --d-fg: var(--color-on-accent); }
+  .destacado--magenta { --d-bg: var(--brand-magenta); --d-fg: var(--color-on-magenta); }
+  .destacado--ink { --d-bg: var(--brand-ink); --d-fg: var(--brand-paper); }
 
-  .card--red { --card-bg: var(--brand-red); --card-fg: var(--color-on-accent); }
-  .card--blue { --card-bg: var(--brand-blue); --card-fg: var(--color-on-accent); }
-  .card--magenta { --card-bg: var(--brand-magenta); --card-fg: var(--color-on-magenta); }
-  .card--ink { --card-bg: var(--brand-ink); --card-fg: var(--brand-paper); }
+  .destacado h3 {
+    margin-block-start: var(--space-2);
+    font-size: min(var(--step-3), 3.4rem, 11vw);
+    font-weight: 700;
+    line-height: var(--leading-display);
+    letter-spacing: var(--tracking-display);
+    text-wrap: balance;
+  }
 
-  .card h3 { margin-block-start: var(--space-2); font-size: var(--step-card); }
-  .card__desc { font-size: var(--step-sm); opacity: 0.92; }
+  .destacado__resumen { font-size: var(--step-1); line-height: 1.35; }
 
-  .feats {
+  .destacado__incluye {
+    margin: 0;
+    padding: var(--space-3) 0 0;
+    list-style: none;
+    display: grid;
+    gap: 0.45rem;
+    border-block-start: var(--border-w) solid currentColor;
+  }
+
+  .destacado__incluye li { display: flex; gap: 0.6em; align-items: baseline; }
+  .destacado__incluye li::before { content: '—'; flex: none; }
+
+  .destacado__pie {
+    margin-block-start: auto;
+    padding-block-start: var(--space-3);
+  }
+
+  .destacado .precio__cifra { font-size: var(--step-2); }
+
+  /* ── La lista ──────────────────────────────────────────────────── */
+  .lista {
     margin: 0;
     padding: 0;
     list-style: none;
+    border-block-end: var(--border-w) solid var(--brand-ink);
+  }
+
+  .fila {
     display: grid;
-    gap: 0.4rem;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--space-2) var(--space-3);
+    padding-block: var(--space-4);
+    border-block-start: var(--border-w) solid var(--brand-ink);
+  }
+
+  .fila :global(.fila__figura) {
+    margin-block-start: 0.15rem;
+    transition: transform 450ms var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .fila:hover :global(.fila__figura) { transform: rotate(90deg); }
+  }
+
+  .fila h3 { font-size: var(--step-card); }
+
+  .fila__resumen {
+    margin-block-start: var(--space-1);
+    color: var(--color-muted);
+  }
+
+  /* Lo que incluye, como un párrafo corrido separado por puntos: en
+     la lista basta para comparar. */
+  .fila__incluye {
+    margin-block-start: var(--space-2);
     font-size: var(--step-sm);
-    border-block-start: var(--border-w) solid currentColor;
-    padding-block-start: var(--space-2);
   }
 
-  .feats li { display: flex; gap: 0.6em; align-items: baseline; }
-  .feats li::before { content: '—'; flex: none; opacity: 0.7; }
+  .fila__precio { grid-column: 2; }
 
-  .card__foot {
-    margin-block-start: auto;
-    padding-block-start: var(--space-3);
+  /* ── Precio y entrega, compartidos ─────────────────────────────── */
+  .precio { display: grid; gap: 0.1em; }
+
+  .precio__desde,
+  .entrega {
     font-size: var(--step-xs);
-    text-transform: uppercase;
+    font-weight: 600;
     letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
   }
 
-  .price b { font-family: var(--font-display); font-size: var(--step-sm); }
-  .eta { opacity: 0.8; }
+  .precio__cifra {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--step-1);
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .entrega { margin-block-start: var(--space-1); opacity: 0.8; }
 
   @media (width >= 42rem) {
-    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .fila { grid-template-columns: auto minmax(0, 1fr) auto; }
+    .fila__precio { grid-column: auto; text-align: end; }
   }
-  @media (width >= 68rem) {
-    .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+  @media (width >= 64rem) {
+    .carta {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      align-items: start;
+      gap: var(--space-6);
+    }
   }
 </style>

@@ -1,4 +1,12 @@
 ---
+/**
+ * TESTIMONIOS — Lo que dicen los artistas, a tamaño de titular.
+ *
+ * No son tarjetas: son citas grandes sobre el bloque de tinta, una
+ * debajo de otra y desplazadas, como las frases sueltas de un
+ * cuadernillo de disco. Cada una lleva su raya de color arriba y la
+ * firma debajo. Un archivo en src/content/testimonios/ = una cita.
+ */
 import { getCollection, render } from 'astro:content';
 import { resolverImagen } from '../lib/imagen';
 
@@ -9,31 +17,32 @@ const entries = (await getCollection('testimonios')).sort(
 const testimonios = await Promise.all(
   entries.map(async (e) => ({ ...e, Body: (await render(e)).Content }))
 );
-
 ---
 
 <section class="section section--ink" id="testimonios">
   <div class="wrap">
     <h2 class="reveal">Lo que dicen<br />quienes ya grabaron</h2>
 
-    <ul class="quotes" role="list">
+    <ul class="citas" role="list">
       {
         testimonios.map(({ data, Body }, i) => (
-          <li class:list={['quote', 'reveal', `quote--${i % 3}`]} data-foco>
-            <span class="quote__mark" aria-hidden="true">"</span>
-            <blockquote><Body /></blockquote>
-            <footer class="quote__by">
-              {data.foto && <img src={resolverImagen(data.foto, 112)} alt="" width="56" height="56" loading="lazy" />}
-              <div>
-                <p class="quote__name">{data.nombre}</p>
-                <p class="quote__proj">
-                  {data.rol ? `${data.rol} · ` : ''}{data.proyecto}
-                </p>
-              </div>
-              <p class="quote__stars" aria-label={`${data.rating} de 5`}>
-                <span aria-hidden="true">{'★'.repeat(data.rating)}</span>
-              </p>
-            </footer>
+          <li class:list={['cita', `cita--${i % 3}`]}>
+            <figure>
+              <blockquote>
+                <Body />
+              </blockquote>
+              <figcaption class="cita__firma">
+                {data.foto && (
+                  <img src={resolverImagen(data.foto, 112)} alt="" width="56" height="56" loading="lazy" />
+                )}
+                <span>
+                  <span class="cita__nombre">{data.nombre}</span>
+                  <span class="cita__proyecto">
+                    {data.rol ? `${data.rol} · ` : ''}{data.proyecto}
+                  </span>
+                </span>
+              </figcaption>
+            </figure>
           </li>
         ))
       }
@@ -45,100 +54,91 @@ const testimonios = await Promise.all(
   .section--ink {
     background: var(--brand-ink);
     color: var(--brand-paper);
+    /* El texto secundario se tiñe del propio fondo invertido, no de
+       un gris: sobre tinta el --color-muted de la página no contrasta. */
+    --cita-suave: color-mix(in srgb, var(--brand-paper) 72%, var(--brand-ink));
   }
 
-
-  .quotes {
+  .citas {
     list-style: none;
     padding: 0;
     margin-block-start: var(--space-5);
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--gap-cards);
+    gap: var(--space-6);
   }
 
-  .quote {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-    padding: var(--space-4) var(--space-3);
-    background: var(--brand-paper);
-    color: var(--brand-ink);
-    border: var(--border-w) solid var(--brand-ink);
-    box-shadow: var(--shadow-hard);
+  .cita--0 { --cita-c: var(--brand-red); }
+  .cita--1 { --cita-c: var(--brand-blue); }
+  .cita--2 { --cita-c: var(--brand-magenta); }
+
+  .cita figure {
+    margin: 0;
+    padding-block-start: var(--space-3);
+    border-block-start: var(--border-w-thick) solid var(--cita-c);
+  }
+
+  /* La comilla es una figura más del sistema: el mismo bloque de color
+     que la raya, colgado a la izquierda del texto. */
+  blockquote {
     position: relative;
-    transition:
-      transform var(--transition),
-      box-shadow var(--transition);
+    margin: 0;
+    font-size: clamp(1.2rem, 0.95rem + 1vw, 1.75rem);
+    line-height: 1.42;
+    text-wrap: pretty;
   }
 
-  /* Efectos de realce. Se encienden con el ratón y, en pantallas sin
-     ratón, con la clase .en-foco que pone el scroll (src/scripts/foco.ts):
-     lo que pasa por el centro de la pantalla es lo que está vivo. */
-  .quote:is(:hover, .en-foco) {
-    transform: translate(-5px, -5px);
-    box-shadow: 13px 13px 0 var(--q-c);
-  }
-
-  .quote:is(:hover, .en-foco)::after { inline-size: 4rem; block-size: 4rem; border-radius: 0 0 0 4rem; }
-  .quote:is(:hover, .en-foco) .quote__mark { transform: scale(1.25); }
-
-  /* Cada tarjeta lleva un cuadrante de color distinto en la esquina */
-  .quote::after {
-    content: '';
-    position: absolute;
-    inset-block-start: 0;
-    inset-inline-end: 0;
-    inline-size: 2.5rem;
-    block-size: 2.5rem;
-    background: var(--q-c);
-    border-radius: 0 0 0 2.5rem;
-    transition: inline-size var(--transition), block-size var(--transition);
-  }
-
-  .quote--0 { --q-c: var(--brand-red); }
-  .quote--1 { --q-c: var(--brand-blue); }
-  .quote--2 { --q-c: var(--brand-magenta); }
-
-  .quote__mark {
+  blockquote::before {
+    content: '“';
+    display: block;
     font-family: var(--font-display);
-    font-size: var(--step-3);
-    line-height: 0.5;
-    color: var(--q-c);
-    transform-origin: left center;
-    transition: transform 350ms var(--ease-out);
+    font-weight: 700;
+    font-size: 4em;
+    line-height: 0.6;
+    block-size: 0.38em;
+    color: var(--cita-c);
   }
 
-  blockquote { font-size: var(--step-0); }
-  blockquote :global(p) { max-width: none; }
+  blockquote :global(p) { max-width: 38em; }
+  blockquote :global(p + p) { margin-block-start: 0.8em; }
 
-  .quote__by {
-    margin-block-start: auto;
-    padding-block-start: var(--space-2);
-    border-block-start: var(--border-w) solid var(--brand-ink);
+  .cita__firma {
     display: flex;
     align-items: center;
     gap: var(--space-2);
+    margin-block-start: var(--space-4);
   }
 
-  .quote__by img {
+  .cita__firma img {
     flex: none;
     inline-size: 56px;
     block-size: 56px;
     object-fit: cover;
     border-radius: 50%;
-    border: 2px solid var(--brand-ink);
+    border: 2px solid var(--cita-c);
     filter: grayscale(1);
   }
 
-  .quote__name { font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
-  .quote__proj { font-size: var(--step-xs); color: var(--color-muted); }
-  .quote__stars { margin-inline-start: auto; color: var(--brand-red); letter-spacing: -0.05em; }
+  .cita__firma > span { display: grid; }
 
-  /* Tantas columnas como testimonios quepan, sin dejar huecos: con
-     tres columnas fijas y dos testimonios, la tercera quedaba vacía y
-     la fila parecía a medio hacer. */
-  @media (width >= 48rem) {
-    .quotes { grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
+  .cita__nombre {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--step-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .cita__proyecto {
+    font-size: var(--step-xs);
+    color: var(--cita-suave);
+  }
+
+  /* En ancho las citas se desplazan: la primera pegada a la izquierda,
+     la siguiente empujada a la derecha. El zigzag es lo que las hace
+     leerse como voces distintas y no como una lista. */
+  @media (width >= 55rem) {
+    .citas { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+    .cita { grid-column: 1 / span 9; }
+    .cita:nth-child(even) { grid-column: 4 / -1; }
   }
 </style>

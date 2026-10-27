@@ -13,14 +13,14 @@ const trabajos = (await getCollection('trabajos'))
 
 ---
 
-<section class="section section--alt" id="trabajos">
+<section class="section" id="trabajos">
   <div class="wrap">
     <h2 class="reveal">Discografía<br />seleccionada</h2>
 
     <div class="works">
       {
         trabajos.map((t, i) => (
-          <article class:list={['work', 'reveal', { 'work--wide': t.data.destacado }]} data-foco>
+          <article class:list={['work', { 'work--wide': t.data.destacado }]} data-foco>
             <header class="work__head">
               <span class="work__idx">{String(i + 1).padStart(2, '0')}</span>
               <div>
@@ -60,7 +60,6 @@ const trabajos = (await getCollection('trabajos'))
 </section>
 
 <style>
-  .section--alt { background: var(--brand-paper-dim); }
 
   .works {
     display: grid;

@@ -160,7 +160,6 @@ export const HERO = {
   encuadre: 'center 52%',   // qué parte se conserva al recortar
   oscurecer: 0.5,           // 0 = foto limpia · 1 = negro
   vineta: 0.9,              // cuánto se cierran las esquinas
-  particulas: true,         // false = solo la foto
 };
 ```
 
@@ -190,32 +189,13 @@ un oscurecido plano (`oscurecer`), un degradado desde abajo que le da suelo
 al texto, y la elipse que cierra las esquinas (`vineta`). Si la foto que
 pongas es clara, sube `oscurecer` hasta que el titular se lea sin esfuerzo.
 
-#### Las partículas
+#### El fader de "merece"
 
-`src/components/Hero.astro`, al final, en el `<script>`. Son las figuras del
-vocabulario Bauhaus del sitio —círculo, medio círculo, cuarto, triángulo y
-cuadrado—, todas blancas, unas rellenas y otras a línea. Flotan despacio,
-giran sobre sí mismas y se apartan del puntero.
-
-Las constantes de arriba del script son los mandos:
-
-| Constante  | Qué hace                                              |
-| ---------- | ----------------------------------------------------- |
-| `DENSIDAD` | Figuras por píxel de pantalla. Más alto = más llena.  |
-| `MAX`      | Tope de figuras, para que un monitor grande no se vaya |
-| `TAM`      | Radio mínimo y máximo, en píxeles                     |
-| `ALFA`     | Opacidad. Es un fondo: si se lee, estorba.            |
-| `ALCANCE`  | Hasta dónde llega el empuje del puntero               |
-| `HILO`     | Distancia a la que dos figuras se unen con una línea  |
-
-No usa ninguna librería: son cuarenta figuras y una resta de vectores. Se
-para sola cuando el hero sale de pantalla o la pestaña pasa a segundo plano,
-y con "reducir movimiento" activado en el sistema se pinta una vez y se queda
-quieta.
-
-> La ilustración anterior del tocadiscos sigue en
-> `src/components/HeroArt.astro`, sin usar. Para recuperarla, impórtala en
-> `Hero.astro` y ponla donde quieras; si no la vas a querer, borra el archivo.
+Es el único movimiento de autor de la página: cuando el titular ha subido,
+el bloque magenta de `<span class="hl">` se rellena de izquierda a derecha,
+como un fader que sube, y la palabra pasa de blanco a tinta. Está en el CSS
+de `src/components/Hero.astro` (`subir-fader`). Con "reducir movimiento"
+activado el bloque aparece ya lleno.
 
 ### Banda de créditos
 
@@ -402,9 +382,10 @@ El texto del bloque va aquí, en el cuerpo. Admite varios párrafos.
 La foto sale en gris y recupera el color al pasar el ratón. La figura Bauhaus
 se solapa con la esquina y gira 90° en el mismo gesto.
 
-#### 2. Sesiones — galería
+#### 2. Sesiones — fotos bajo los bloques de Estudio
 
-Un archivo por foto en `src/content/galeria/`.
+Un archivo por foto en `src/content/galeria/`. Salen en la misma sección
+que los bloques de Estudio, debajo, con el rótulo "Sesiones".
 
 ```yaml
 ---
@@ -494,8 +475,9 @@ Para las fotos definitivas, mejor una de estas, por orden de comodidad:
 
 #### El menú se ajusta solo
 
-Estudio y Sesiones **solo existen si tienen fotos**. Mientras estén vacías, sus
-enlaces no aparecen en el menú (si no, apuntarían a un ancla inexistente).
+La sección Estudio (bloques + Sesiones) **solo existe si tiene fotos**. Mientras
+estén vacías las dos colecciones, su enlace no aparece en el menú (si no,
+apuntaría a un ancla inexistente).
 
 En cuanto pongas la primera imagen, la sección aparece y su enlace entra en el
 menú. No hay que tocar código.
@@ -729,19 +711,17 @@ el sitio pierde la mitad de su carácter.
 | `--content-max` | Ancho máximo del contenido (78 rem) |
 | `--gutter` | **Aire a los lados.** El mínimo (1.75 rem) es el que manda en móvil |
 | `--transition` | Velocidad normal de los realces (180 ms) |
-| `--transition-lento` | La de Proceso y Sesiones (620 ms) |
+| `--transition-lento` | La del pie de las fotos de Sesiones |
 | `--embed-bg` | Fondo de los reproductores (gris de Spotify) |
 
 `--gap-cards` y `--space-7` (aire vertical de cada sección) son los dos que
 probablemente quieras ajustar al ver el sitio con tu contenido.
 
-**Sobre las dos velocidades:** Proceso y Sesiones van más despacio que el
-resto porque son los realces más grandes —un bloque entero que se rellena de
-color, una foto que pasa de gris a color— y porque en móvil los dispara el
-scroll, no el ratón. A 180 ms el cambio se adelanta al dedo y parece un
-parpadeo. Si quieres afinarlo, `--transition-lento` en `brand.css` los
-gobierna a los dos a la vez; las fotos de Sesiones llevan además su propio
-tiempo (900 ms para el color, 1100 ms para el zoom) en `Gallery.astro`.
+**El movimiento de la página** se reduce a tres cosas: el fader de "merece"
+en la portada, los titulares de sección que suben desde su línea al entrar en
+pantalla (`global.css` y `src/scripts/revelar.ts`) y la línea de Proceso, que
+se rellena tramo a tramo al bajar (`Process.astro`). Las fotos pasan de gris a
+color al pasar el ratón o, en móvil, al cruzar el centro de la pantalla.
 
 **La barra de desplazamiento** también va de rojo de marca, con el tirador en
 magenta al agarrarlo (`global.css`). Necesita dos sintaxis: `scrollbar-color`

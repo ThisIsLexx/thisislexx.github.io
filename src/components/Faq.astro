@@ -17,7 +17,7 @@ const items = await Promise.all(
     <div class="faq__list">
       {
         items.map(({ data, Body }) => (
-          <details class="qa reveal" name="faq">
+          <details class="qa" name="faq">
             <summary>
               <span>{data.pregunta}</span>
               <span class="qa__icon" aria-hidden="true"></span>

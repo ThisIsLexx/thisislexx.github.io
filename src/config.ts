@@ -38,9 +38,9 @@ export const CONTACT = {
 
 /**
  * ─────────────────────────────────────────────────────────────
- *  HERO — la portada: una foto de fondo, atenuada, con las
- *  partículas por encima. Todo lo de aquí se cambia sin tocar
- *  ningún componente.
+ *  HERO — la portada: una foto de fondo, atenuada, con el
+ *  titular encima. Todo lo de aquí se cambia sin tocar ningún
+ *  componente.
  * ─────────────────────────────────────────────────────────────
  */
 export const HERO = {
@@ -60,8 +60,6 @@ export const HERO = {
   /** Saturación de la foto. 1 = color original · 0 = blanco y negro.
       Bajarlo apaga el color sin oscurecer, que es lo que hace 'oscurecer'. */
   saturacion: 0.72,
-  /** Partículas interactivas encima de la foto. false = solo la foto. */
-  particulas: true,
 } as const;
 
 export const SOCIAL = [
@@ -77,12 +75,11 @@ export const SOCIAL = [
  * vacía, para no dejar un enlace que no lleva a ninguna parte.
  */
 export const NAV = [
-  { label: 'Estudio', href: '#estudio', requiere: 'estudio' },
-  { label: 'Servicios', href: '#servicios' },
   { label: 'Trabajos', href: '#trabajos' },
-  { label: 'Sesiones', href: '#sesiones', requiere: 'galeria' },
-  { label: 'Proceso', href: '#proceso' },
   { label: 'Clientes', href: '#testimonios' },
+  { label: 'Servicios', href: '#servicios' },
+  { label: 'Proceso', href: '#proceso' },
+  { label: 'Estudio', href: '#estudio', requiere: 'estudio' },
   { label: 'FAQ', href: '#faq' },
 ] as const satisfies readonly { label: string; href: string; requiere?: 'estudio' | 'galeria' }[];
 

@@ -1,18 +1,29 @@
 ---
 /**
- * ESTUDIO — Bloques de foto grande + texto, alternando el lado.
+ * ESTUDIO — Dónde se graba y se mezcla: bloques de foto grande +
+ * texto, alternando el lado, y debajo las fotos de sesiones.
  *
- * Es la pieza que le da ritmo de landing page a la página: entre dos
- * secciones densas de tarjetas, un bloque ancho con una imagen deja
- * respirar. Un archivo en src/content/estudio/ = un bloque.
+ * Antes eran dos secciones (Estudio y Sesiones) que enseñaban lo
+ * mismo, el estudio, con dos titulares distintos. Ahora es una:
+ *   · src/content/estudio/  → un archivo = un bloque foto + texto
+ *   · src/content/galeria/  → un archivo = una foto de sesión
  *
- * Los bloques SIN imagen se descartan, y si no queda ninguno la
- * sección entera no se pinta. Así los archivos de ejemplo pueden
- * vivir en el repositorio sin sacar un hueco roto en la página.
+ * Lo que no trae imagen se descarta, y si no queda nada en ninguna
+ * de las dos colecciones la sección entera no se pinta. Así los
+ * archivos de ejemplo pueden vivir en el repositorio sin sacar un
+ * hueco roto en la página.
  */
 import { getCollection, render } from 'astro:content';
 import Shape from './Shape.astro';
 import { resolverImagen } from '../lib/imagen';
+
+/** Proporción del hueco de cada foto de sesión, según su campo `formato` */
+const RATIOS = {
+  apaisado: '4 / 3',
+  vertical: '3 / 4',
+  cuadrado: '1 / 1',
+  original: 'auto',
+} as const;
 
 const entradas = (await getCollection('estudio'))
   .filter((e) => e.data.imagen.trim() !== '')
@@ -22,49 +33,77 @@ const bloques = await Promise.all(
   entradas.map(async (e) => ({ ...e, Body: (await render(e)).Content }))
 );
 
+const fotos = (await getCollection('galeria'))
+  .filter((f) => f.data.imagen.trim() !== '')
+  .sort((a, b) => a.data.orden - b.data.orden);
 ---
 
 {
-  bloques.length > 0 && (
+  (bloques.length > 0 || fotos.length > 0) && (
     <section class="section" id="estudio">
       <div class="wrap">
         <h2 class="reveal">Dónde<br />pasa todo</h2>
 
-        <div class="bloques">
-          {/* Los bloques alternan lado, así que la entrada alterna con
-              ellos: cada uno viene del borde donde vive su foto. */}
-          {bloques.map((b, i) => (
-            <article
-              class:list={[
-                'bloque',
-                'reveal',
-                i % 2 === 1 ? 'reveal--der' : 'reveal--izq',
-                { 'bloque--invertido': i % 2 === 1 },
-              ]}
-              data-foco
-            >
-              <figure class:list={['bloque__foto', `bloque__foto--${b.data.color}`]}>
-                <img
-                  src={resolverImagen(b.data.imagen)}
-                  alt={b.data.alt}
-                  loading="lazy"
-                  decoding="async"
-                />
-                <Shape
-                  tipo={b.data.figura}
-                  color={b.data.color}
-                  size="min(22vw, 8rem)"
-                  class="bloque__figura"
-                />
-              </figure>
+        {bloques.length > 0 && (
+          <div class="bloques">
+            {/* Cada bloque entra desde el borde donde vive su foto. */}
+            {bloques.map((b, i) => (
+              <article
+                class:list={[
+                  'bloque',
+                  'reveal',
+                  i % 2 === 1 ? 'reveal--der' : 'reveal--izq',
+                  { 'bloque--invertido': i % 2 === 1 },
+                ]}
+                data-foco
+              >
+                <figure class="bloque__foto">
+                  <img
+                    src={resolverImagen(b.data.imagen)}
+                    alt={b.data.alt}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <Shape
+                    tipo={b.data.figura}
+                    color={b.data.color}
+                    size="min(22vw, 8rem)"
+                    class="bloque__figura"
+                  />
+                </figure>
 
-              <div class="bloque__texto">
-                <h3>{b.data.titulo}</h3>
-                <b.Body />
-              </div>
-            </article>
-          ))}
-        </div>
+                <div class="bloque__texto">
+                  <h3>{b.data.titulo}</h3>
+                  <b.Body />
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+
+        {fotos.length > 0 && (
+          <div class="sesiones">
+            <h3 class="sesiones__titulo">Sesiones</h3>
+
+            <ul class="galeria" role="list">
+              {fotos.map((f) => (
+                <li
+                  class:list={['foto', 'reveal', 'reveal--zoom', { 'foto--ancha': f.data.ancha }]}
+                  style={`--foto-ratio: ${RATIOS[f.data.formato]}`}
+                  data-foco
+                >
+                  <img
+                    src={resolverImagen(f.data.imagen)}
+                    alt={f.data.alt}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  {f.data.titulo && <p class="foto__pie">{f.data.titulo}</p>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </section>
   )
@@ -163,6 +202,96 @@ const bloques = await Promise.all(
     .bloque--invertido :global(.bloque__figura) {
       inset-inline-start: auto;
       inset-inline-end: calc(var(--space-3) * -1);
+    }
+  }
+
+  /* ── Sesiones ──────────────────────────────────────────────────
+     Mismo tratamiento que las fotos de arriba: marco de tinta, gris
+     por defecto y a color al acercarse. Sin veladura de color: dos
+     tratamientos de foto en una misma sección se leen como dos
+     sitios distintos. */
+  .sesiones {
+    display: grid;
+    gap: var(--space-4);
+    margin-block-start: var(--space-6);
+  }
+
+  .sesiones__titulo { font-size: var(--step-2); }
+
+  .galeria {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--gap-cards);
+    /* Sin esto, una foto baja estira a sus vecinas de fila y les deja
+       una franja de fondo debajo del marco. */
+    align-items: start;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .foto {
+    position: relative;
+    margin: 0;
+    border: var(--border-w) solid var(--brand-ink);
+    overflow: hidden;
+  }
+
+  .foto img {
+    display: block;
+    inline-size: 100%;
+    aspect-ratio: var(--foto-ratio, 4 / 3);
+    object-fit: cover;
+    filter: grayscale(1) contrast(1.05);
+    transition: filter 420ms var(--ease-out), transform 620ms var(--ease-out);
+  }
+
+  .foto:is(:hover, .en-foco) img { filter: grayscale(0) contrast(1); transform: scale(1.03); }
+
+  /* Pie que sube desde abajo. Sin ratón se queda visible: la
+     información no puede depender de un puntero que no existe. */
+  .foto__pie {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    margin: 0;
+    padding: var(--space-2);
+    background: var(--brand-ink);
+    color: var(--brand-paper);
+    font-size: var(--step-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    max-width: none;
+  }
+
+  @media (hover: hover) {
+    .foto__pie {
+      translate: 0 100%;
+      transition: translate var(--transition-lento);
+    }
+
+    .foto:hover .foto__pie { translate: 0 0; }
+  }
+
+  @media (width >= 42rem) {
+    .galeria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .foto--ancha { grid-column: 1 / -1; }
+  }
+
+  /* En ancho, el rótulo se queda en la primera columna y las fotos
+     ocupan el resto: dos o tres fotos llenan la fila en vez de dejar
+     un hueco a la derecha, y si llegan más, bajan en su columna
+     mientras el rótulo las acompaña pegado arriba. */
+  @media (width >= 62rem) {
+    .sesiones {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2.4fr);
+      gap: var(--gap-cards);
+      align-items: start;
+    }
+
+    .sesiones__titulo {
+      position: sticky;
+      inset-block-start: calc(4.5rem + var(--space-4));
     }
   }
 </style>

@@ -8,9 +8,10 @@
  * se queda con las figuras de colores de siempre, así que la sección
  * nunca aparece coja.
  *
- * Tratamiento: el de las fotos de Estudio — marco de tinta y blanco
- * y negro que recupera el color al pasar el ratón, sin veladura de
- * color encima.
+ * Es el cierre de la página: un bloque de tinta con el titular casi
+ * al tamaño de la portada y un solo color fuerte, el rojo del botón
+ * de WhatsApp. El retrato lleva el tratamiento de
+ * las fotos de Estudio: blanco y negro que recupera el color.
  */
 import { CONTACT, waHref, mailHref } from '../config';
 import { resolverImagen } from '../lib/imagen';
@@ -24,17 +25,17 @@ const retrato = resolverImagen(CONTACT.retrato, 900);
   <div class="wrap contacto__grid">
     <div>
       <h2 class="reveal">Cuéntame<br />tu proyecto</h2>
-      <p class="lead reveal">
+      <p class="lead">
         No hay formulario que llenar. Escríbeme por WhatsApp o correo con
         tu género, cuántas canciones son y para cuándo las necesitas.
         Te respondo con un presupuesto en menos de 48 horas.
       </p>
 
-      <div class="contacto__cta reveal">
+      <div class="contacto__cta">
         <a class="btn" href={waHref} target="_blank" rel="noopener">
           Abrir WhatsApp
         </a>
-        <a class="btn btn--blue" href={mailHref}>Enviar correo</a>
+        <a class="btn btn--linea" href={mailHref}>Enviar correo</a>
       </div>
 
       <p class="contacto__mail">
@@ -50,7 +51,7 @@ const retrato = resolverImagen(CONTACT.retrato, 900);
       ) : (
         <div class="contacto__art" aria-hidden="true">
           <Shape tipo="ring" color="magenta" size="min(30vw, 12rem)" />
-          <Shape tipo="halfcircle" color="red" size="min(34vw, 14rem)" />
+          <Shape tipo="halfcircle" color="ink" size="min(34vw, 14rem)" />
           <Shape tipo="square" color="blue" size="min(18vw, 7rem)" />
         </div>
       )
@@ -59,7 +60,27 @@ const retrato = resolverImagen(CONTACT.retrato, 900);
 </section>
 
 <style>
-  .contacto { background: var(--brand-paper-dim); }
+  /* ── El cierre ─────────────────────────────────────────────────
+     Bloque invertido, como Testimonios: tinta de fondo, papel para el
+     texto, y el rojo reservado al botón de WhatsApp para que sea lo
+     único que tira de la mirada. Los roles se reasignan aquí, igual
+     que en la isla oscura del hero, para que líneas, sombras y foco
+     salgan del papel y no se pierdan sobre la tinta. */
+  .contacto {
+    --brand-line: var(--brand-paper);
+    --color-fg: var(--brand-paper);
+    --color-focus: var(--brand-paper);
+    --contacto-sombra: var(--brand-paper);
+
+    background: var(--brand-ink);
+    color: var(--brand-paper);
+  }
+
+  /* Casi al tamaño de la portada: un punto menos para que "tu
+     proyecto" quepa en un renglón junto al retrato. */
+  .contacto h2 { font-size: min(var(--step-4), 4.75rem, 12vw); }
+
+  .contacto .lead { color: inherit; }
 
   .contacto__grid { display: grid; gap: var(--space-5); align-items: center; }
 
@@ -68,6 +89,17 @@ const retrato = resolverImagen(CONTACT.retrato, 900);
     flex-wrap: wrap;
     gap: var(--space-2);
     margin-block-start: var(--space-4);
+  }
+
+  /* El botón principal es el rojo de siempre; aquí solo cambia su
+     sombra, que sobre la tinta tiene que ser de papel para verse. */
+  .contacto .btn { box-shadow: 4px 4px 0 var(--contacto-sombra); }
+  .contacto .btn:hover { box-shadow: 0 0 0 transparent; }
+
+  .btn--linea {
+    --btn-bg: transparent;
+    --btn-fg: var(--brand-paper);
+    border-color: currentColor;
   }
 
   .contacto__mail {
@@ -96,11 +128,10 @@ const retrato = resolverImagen(CONTACT.retrato, 900);
     inline-size: 100%;
     max-inline-size: 26rem;
     justify-self: center;
-    border: var(--border-w) solid var(--brand-ink);
+    border: var(--border-w) solid currentColor;
+    box-shadow: var(--shadow-hard);
+    --shadow-hard: 8px 8px 0 var(--contacto-sombra);
     overflow: hidden;
-    transition:
-      transform var(--transition-lento),
-      box-shadow var(--transition-lento);
   }
 
   .retrato img {
@@ -109,22 +140,17 @@ const retrato = resolverImagen(CONTACT.retrato, 900);
     aspect-ratio: 3 / 4;
     object-fit: cover;
     filter: grayscale(1) contrast(1.05);
-    transition: filter 380ms ease, transform 450ms cubic-bezier(0.2, 0, 0.1, 1);
+    transition: filter 420ms var(--ease-out), transform 620ms var(--ease-out);
   }
-
-  /* Blanco y negro limpio, como las fotos de Estudio: sin veladura
-     de color encima. El magenta en multiply es cosa de Sesiones, y
-     sobre esta foto —ya morada de por sí— la teñía entera. */
 
   /* Con ratón lo enciende :hover; en táctil, la clase que pone el
      scroll (src/scripts/foco.ts) al pasar por el centro. */
-  .retrato:is(:hover, .en-foco) {
-    transform: translate(-5px, -5px);
-    box-shadow: var(--shadow-hard);
-  }
-  .retrato:is(:hover, .en-foco) img { filter: grayscale(0) contrast(1); transform: scale(1.04); }
+  .retrato:is(:hover, .en-foco) img { filter: grayscale(0) contrast(1); transform: scale(1.03); }
 
   @media (width >= 55rem) {
-    .contacto__grid { grid-template-columns: 1.1fr 0.9fr; gap: var(--space-6); }
+    .contacto__grid {
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr);
+      gap: var(--space-6);
+    }
   }
 </style>

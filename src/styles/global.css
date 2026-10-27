@@ -270,60 +270,60 @@ a {
   white-space: nowrap;
 }
 
-/* ── Entradas al hacer scroll ──────────────────────────────────
+/* ── Entrada de los titulares ─────────────────────────────────
    Quién enciende esto: src/scripts/revelar.ts, que pone .visible
-   cuando el bloque entra en pantalla.
+   cuando el titular entra en pantalla.
 
-   Todo cuelga de `.js`, la clase que el propio documento se pone en
-   <html> antes del primer pintado. Sin JavaScript no hay clase, no
-   hay regla, y el contenido se ve desde el principio: esconder algo
-   a la espera de un script que quizá no llegue es la forma más
-   rápida de dejar una página en blanco.
+   Un solo gesto para toda la página: el titular de cada sección sube
+   desde debajo de su propia línea, igual que el de la portada. Antes
+   cada bloque —tarjetas, fotos, botones— entraba con su desvanecido,
+   y un efecto repetido en todo deja de decir nada. Ahora solo se
+   mueve lo que abre una sección; el resto ya está en su sitio.
 
-   Se anima con @keyframes y NO con transition, aunque una transición
-   sería más corta de escribir. El motivo: `.js .reveal.visible` pesa
-   más en la cascada que `.card`, `.foto` o `.step`, así que su
-   `transition` les pisaría la del hover — se lo dejaría todo en 560ms
-   y sin transición de sombra. Una animación convive con las
-   transiciones de los componentes en vez de competir con ellas.
-
-   Y sin `forwards` a propósito: una animación rellenada hacia delante
-   congela el transform y dejaría los hover que mueven la tarjeta sin
-   efecto para siempre. El estado final lo pone la regla; la animación
-   solo cubre el trayecto.
-
-   NUNCA se parte de invisible. El punto de arranque es 0.7 de opacidad
-   y medio centímetro de desplazamiento: lo justo para que el bloque
-   se asiente al entrar, no para que aparezca de la nada. Un contenido
-   que empieza en opacity 0 es contenido que, si el movimiento falla o
-   llega tarde, no está — y la lectura no puede depender de un efecto.
-   Súbelo o bájalo en --reveal-desde.                                */
+   Todo cuelga de `.js`, la clase que el documento se pone antes del
+   primer pintado: sin JavaScript no hay regla y el titular se ve
+   desde el principio. El estado de reposo es siempre el legible; lo
+   oculto vive solo en el primer fotograma, rellenado con `backwards`
+   durante el retardo.                                              */
 @media (prefers-reduced-motion: no-preference) {
+  .js h2.reveal.visible {
+    animation: subir-titular 760ms cubic-bezier(0.16, 1, 0.3, 1) var(--retardo, 0ms) backwards;
+  }
+
+  @keyframes subir-titular {
+    from { clip-path: inset(0 0 100% 0); translate: 0 0.35em; }
+    to { clip-path: inset(0 0 -0.2em 0); translate: 0 0; }
+  }
+
+  /* ── Bloques de foto ─────────────────────────────────────────
+     Las fotos de Estudio, Sesiones y el retrato también entran: cada
+     bloque desde el borde donde vive su foto, y las de sesión
+     asentándose. NUNCA se parte de invisible: el punto de arranque
+     es 0.7 de opacidad y un desplazamiento corto, lo justo para que
+     el bloque se asiente al entrar, no para que aparezca de la nada.
+     Se anima con @keyframes y no con transition, para no pisar las
+     transiciones de los realces de cada componente; y sin
+     `forwards`, para no congelar el transform de esos realces. */
   :root {
-    /* Opacidad de partida. En 1 el efecto queda solo en el
-       desplazamiento; no bajar de 0.5 o volvemos a la aparición. */
     --reveal-desde: 0.7;
     --reveal-recorrido: 0.6rem;
   }
 
-  .js .reveal { opacity: var(--reveal-desde); }
+  .js .reveal:not(h2) { opacity: var(--reveal-desde); }
 
-  .js .reveal.visible {
+  .js .reveal:not(h2).visible {
     opacity: 1;
-    /* `backwards` mantiene el fotograma inicial durante el retardo:
-       sin él, el bloque daría un salto al llegarle su turno. */
-    animation: revelar 420ms cubic-bezier(0.2, 0, 0.1, 1) var(--retardo, 0ms) backwards;
+    animation: revelar 520ms cubic-bezier(0.2, 0, 0.1, 1) var(--retardo, 0ms) backwards;
   }
+
+  .js .reveal--izq.visible { animation-name: revelar-izq; }
+  .js .reveal--der.visible { animation-name: revelar-der; }
+  .js .reveal--zoom.visible { animation-name: revelar-zoom; }
 
   @keyframes revelar {
     from { opacity: var(--reveal-desde); transform: translateY(var(--reveal-recorrido)); }
     to { opacity: 1; transform: none; }
   }
-
-  /* Variantes de dirección: de dónde viene el bloque. Mismos tiempos. */
-  .js .reveal--izq.visible { animation-name: revelar-izq; }
-  .js .reveal--der.visible { animation-name: revelar-der; }
-  .js .reveal--zoom.visible { animation-name: revelar-zoom; }
 
   @keyframes revelar-izq {
     from { opacity: var(--reveal-desde); transform: translateX(calc(var(--reveal-recorrido) * -1.25)); }

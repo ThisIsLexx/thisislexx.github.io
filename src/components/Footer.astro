@@ -36,6 +36,9 @@ const year = new Date().getFullYear();
   .pie {
     background: var(--brand-ink);
     color: var(--brand-paper);
+    /* Contacto y pie comparten la tinta: una raya tenue los separa
+       sin cortar el cierre en dos bloques. */
+    border-block-start: var(--border-w) solid color-mix(in srgb, var(--brand-paper) 22%, var(--brand-ink));
     padding-block-start: var(--space-5);
   }
 

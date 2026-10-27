@@ -1,10 +1,11 @@
 /**
  * ─────────────────────────────────────────────────────────────
- *  REVELAR — Las entradas al hacer scroll
+ *  REVELAR — La entrada de los titulares al hacer scroll
  *
- *  Cada bloque marcado con `.reveal` empieza bajado y transparente,
- *  y sube a su sitio cuando entra en pantalla. El CSS está en
- *  global.css; aquí solo se decide CUÁNDO.
+ *  Cada <h2> marcado con `.reveal` sube desde debajo de su línea
+ *  cuando entra en pantalla. Solo los titulares: es el único gesto
+ *  de entrada de la página. El CSS está en global.css; aquí solo se
+ *  decide CUÁNDO.
  *
  *  Por qué en JavaScript y no con `animation-timeline: view()`:
  *  esa propiedad, que es la forma elegante de hacerlo en CSS puro,
@@ -13,15 +14,12 @@
  *  Un IntersectionObserver se comporta igual en los cuatro motores.
  *
  *  Cómo se usa:
- *    1. Marca el elemento con la clase `reveal`.
- *    2. Si quieres que entre de lado, añade `reveal--izq` o
- *       `reveal--der`; si quieres que crezca, `reveal--zoom`.
- *    3. Para forzar un retardo concreto, ponle el estilo
+ *    1. Ponle la clase `reveal` al <h2> de la sección.
+ *    2. Para forzar un retardo concreto, ponle el estilo
  *       `--retardo: 400ms`. Si no, se calcula solo (ver abajo).
  *
- *  ESCALONADO: los hermanos que comparten padre entran uno detrás
- *  de otro, no todos a la vez. Una retícula de cuatro tarjetas se
- *  lee mucho mejor si caen en cascada.
+ *  ESCALONADO: si dos marcados comparten padre, el segundo entra un
+ *  poco después que el primero.
  *
  *  Con "menos movimiento" activado no hay entrada ninguna: todo
  *  aparece ya colocado.
@@ -90,45 +88,52 @@ function arrancar() {
 
   repartirRetardos(elementos);
 
-  let revelados = 0;
+  let respuestas = 0;
 
-  const observador = new IntersectionObserver(
-    (entradas) => {
-      for (const e of entradas) {
-        // Lo que ya quedó por encima de la pantalla no se anima: pasa
-        // cuando se recarga a media página o se llega por un enlace
-        // con ancla. Animarlo sería estrenar algo que el visitante
-        // no va a ver moverse.
-        const yaPasado = !e.isIntersecting && e.boundingClientRect.bottom < 0;
+  const alEntrar = (entradas: IntersectionObserverEntry[], observador: IntersectionObserver) => {
+    respuestas += entradas.length;
 
-        if (e.isIntersecting || yaPasado) {
-          if (yaPasado) e.target.classList.add('sin-animacion');
-          e.target.classList.add(CLASE);
-          observador.unobserve(e.target);
-          revelados++;
-        }
+    for (const e of entradas) {
+      // Lo que ya quedó por encima de la pantalla no se anima: pasa
+      // cuando se recarga a media página o se llega por un enlace
+      // con ancla. Animarlo sería estrenar algo que el visitante
+      // no va a ver moverse.
+      const yaPasado = !e.isIntersecting && e.boundingClientRect.bottom < 0;
+
+      if (e.isIntersecting || yaPasado) {
+        if (yaPasado) e.target.classList.add('sin-animacion');
+        e.target.classList.add(CLASE);
+        observador.unobserve(e.target);
       }
-    },
-    {
-      // Se dispara un poco antes de que el bloque toque el borde:
-      // así termina de entrar mientras sigue subiendo, y no se ve
-      // arrancar la animación ya dentro de la pantalla.
-      rootMargin: '0px 0px -12% 0px',
-      threshold: 0.05,
     }
-  );
+  };
 
-  for (const el of elementos) observador.observe(el);
+  // Dos momentos distintos para dos gestos distintos:
+  //  · Los titulares arrancan recortados, así que se disparan en
+  //    cuanto asoma el primer píxel; si esperaran a estar dentro se
+  //    les vería un instante enteros antes de esconderse para subir.
+  //  · Los bloques de foto parten ya visibles (al 70%), así que
+  //    esperan a entrar un poco: terminan de asentarse mientras
+  //    siguen subiendo, a la vista, en vez de hacerlo en el borde.
+  const titulares = new IntersectionObserver(alEntrar, { rootMargin: '0px', threshold: 0 });
+  const bloques = new IntersectionObserver(alEntrar, {
+    rootMargin: '0px 0px -12% 0px',
+    threshold: 0.05,
+  });
 
-  // Red de seguridad. Al cargar siempre hay algo del hero en pantalla,
-  // así que a los tres segundos el contador tiene que haberse movido.
-  // Si sigue a cero es que el observador no está funcionando —y lo que
-  // se esconde a la espera de un efecto que no llega es, sin más,
-  // contenido perdido—. Se comprueba que sea CERO y no que falten
-  // algunos: lo normal es que la mitad de la página siga sin entrar.
+  for (const el of elementos) (el.tagName === 'H2' ? titulares : bloques).observe(el);
+
+  // Red de seguridad. Un IntersectionObserver avisa una vez por cada
+  // elemento nada más empezar a observarlo, esté o no en pantalla, así
+  // que a los tres segundos tiene que haber respondido. Si no ha dicho
+  // nada es que no está funcionando —y lo que espera a un efecto que no
+  // llega es, sin más, contenido a medias—. Se cuentan las respuestas y
+  // no lo revelado: al cargar la portada no tiene nada que revelar, y
+  // quien no hace scroll en tres segundos no ha roto nada.
   setTimeout(() => {
-    if (revelados === 0) {
-      observador.disconnect();
+    if (respuestas === 0) {
+      titulares.disconnect();
+      bloques.disconnect();
       revelarTodo();
     }
   }, 3000);
