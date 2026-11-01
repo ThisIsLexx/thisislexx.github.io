@@ -71,6 +71,19 @@ export const HERO = {
  */
 export const CREDITOS = ['CELG', 'OVAN', 'GustavoBK', 'Bleuss'];
 
+/**
+ * Sección de YouTube: el último video del canal y un botón al canal.
+ * Para cambiar el video basta con poner su ID: lo que va después de
+ * "watch?v=" en la URL (youtube.com/watch?v=mnz8TKB_iRI → 'mnz8TKB_iRI').
+ */
+export const YOUTUBE = {
+  canal: 'https://www.youtube.com/@ProducedByLexx?sub_confirmation=1',
+  videoId: 'mnz8TKB_iRI',
+  titulo: 'Detrás de la producción de "Sintonía"',
+  texto:
+    'Te llevo al estudio para que veas cómo nace una canción: el proceso detrás de "Sintonía", de la idea a la versión final.',
+} as const;
+
 export const SOCIAL = [
   { label: 'Instagram', url: 'https://www.instagram.com/_thisislexx_/' },
   { label: 'Spotify', url: 'https://open.spotify.com/intl-es/artist/7CiJ0rMQiUhhAWLtrqcTQf?si=hoy8LxW0QBudzIQzkIgJYA' },
@@ -85,6 +98,7 @@ export const SOCIAL = [
  */
 export const NAV = [
   { label: 'Trabajos', href: '#trabajos' },
+  { label: 'Videos', href: '#videos' },
   { label: 'Clientes', href: '#testimonios' },
   { label: 'Servicios', href: '#servicios' },
   { label: 'Proceso', href: '#proceso' },

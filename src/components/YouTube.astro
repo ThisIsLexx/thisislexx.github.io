@@ -1,0 +1,50 @@
+---
+/**
+ * VIDEOS — El canal de YouTube: un video grande y, al lado, de qué
+ * va y un botón para suscribirse. El video y los textos se cambian
+ * en src/config.ts (YOUTUBE), sin tocar este archivo.
+ */
+import Embed from './Embed.astro';
+import { YOUTUBE } from '../config';
+---
+
+<section class="section videos" id="videos">
+  <div class="wrap">
+    <h2 class="reveal">Del estudio<br />a tu pantalla</h2>
+
+    <div class="videos__grid">
+      <div class="videos__player" data-foco>
+        <Embed plataforma="youtube" embedId={YOUTUBE.videoId} titulo={YOUTUBE.titulo} />
+      </div>
+
+      <div class="videos__info">
+        <h3>{YOUTUBE.titulo}</h3>
+        <p>{YOUTUBE.texto}</p>
+        <a class="btn" href={YOUTUBE.canal} target="_blank" rel="noopener">
+          Suscríbete al canal
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .videos__grid {
+    display: grid;
+    gap: var(--space-4);
+    margin-block-start: var(--space-5);
+    align-items: center;
+  }
+
+  /* Igual que en Trabajos: el reproductor no se mueve, solo gana
+     sombra dura, para que el clic en play no falle. */
+  .videos__player :global(.embed) { transition: box-shadow var(--transition); }
+  .videos__player:is(:hover, .en-foco) :global(.embed) { box-shadow: 8px 8px 0 var(--color-accent); }
+
+  .videos__info { display: grid; gap: var(--space-3); justify-items: start; }
+  .videos__info p { color: var(--color-muted); max-width: 40ch; }
+
+  @media (width >= 55rem) {
+    .videos__grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  }
+</style>

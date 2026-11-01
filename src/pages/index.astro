@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/Hero.astro';
 import Works from '../components/Works.astro';
+import YouTube from '../components/YouTube.astro';
 import Testimonials from '../components/Testimonials.astro';
 import Services from '../components/Services.astro';
 import Process from '../components/Process.astro';
@@ -9,16 +10,17 @@ import Studio from '../components/Studio.astro';
 import Faq from '../components/Faq.astro';
 import Contact from '../components/Contact.astro';
 
-/* El orden es el argumento de la página: escúchame (Trabajos), mira
-   quién lo dice (Testimonios), esto cuesta (Servicios), así
-   trabajamos (Proceso), aquí grabamos (Estudio), dudas (FAQ) y
-   escríbeme (Contacto). Estudio solo se pinta si trae alguna foto.
+/* El orden es el argumento de la página: escúchame (Trabajos), mírame
+   trabajar (Videos), mira quién lo dice (Testimonios), esto cuesta
+   (Servicios), así trabajamos (Proceso), aquí grabamos (Estudio),
+   dudas (FAQ) y escríbeme (Contacto). Estudio solo se pinta si trae alguna foto.
    Para añadir una sección, impórtala y colócala en su sitio. */
 ---
 
 <BaseLayout>
   <Hero />
   <Works />
+  <YouTube />
   <Testimonials />
   <Services />
   <Process />
