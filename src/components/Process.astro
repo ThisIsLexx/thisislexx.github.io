@@ -2,11 +2,11 @@
 /**
  * PROCESO — Cuatro pasos sobre una línea de tiempo.
  *
- * Cada paso tiene su tramo de raya en su color. Al bajar por la
- * página, los tramos se rellenan en orden, de izquierda a derecha
- * (de arriba abajo en móvil): el recorrido del proyecto avanza con
- * el del visitante. Sin JavaScript, o con "reducir movimiento", la
- * línea se ve ya completa.
+ * Una sola línea partida en cuatro tramos, uno por paso y en su
+ * color. Al llegar a la sección la línea se dibuja de un trazo, tramo
+ * por tramo, de izquierda a derecha (de arriba abajo en móvil); al
+ * volver a subir se borra en sentido contrario, del 4 al 1. Sin
+ * JavaScript, o con "reducir movimiento", la línea se ve ya completa.
  */
 const pasos = [
   {
@@ -39,7 +39,7 @@ const pasos = [
     <ol class="linea" role="list" data-linea>
       {
         pasos.map((p, i) => (
-          <li class:list={['paso', `paso--${p.color}`]} style={`--i: ${i}`}>
+          <li class:list={['paso', `paso--${p.color}`]} style={`--i: ${i}; --j: ${pasos.length - 1 - i}`}>
             <span class="paso__n">{String(i + 1).padStart(2, '0')}</span>
             <h3>{p.titulo}</h3>
             <p>{p.texto}</p>
@@ -51,25 +51,26 @@ const pasos = [
 </section>
 
 <script>
-  /* Marca como alcanzado cada paso cuyo borde de arriba ya pasó del
-     55% de la pantalla, y lo desmarca si se vuelve a subir. Lo que
-     queda por encima de la pantalla cuenta como alcanzado. */
-  const pasos = document.querySelectorAll<HTMLElement>('[data-linea] > .paso');
+  /* Una sola señal para toda la línea: se marca cuando su borde de
+     arriba pasa del 55% de la pantalla y se desmarca si se vuelve a
+     subir. Lo que queda por encima de la pantalla cuenta como
+     alcanzado. El orden de los tramos lo pone el CSS. */
+  const linea = document.querySelector<HTMLElement>('[data-linea]');
 
-  if (pasos.length && 'IntersectionObserver' in window) {
-    document.querySelector('[data-linea]')?.classList.add('linea--viva');
+  const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (linea && !quieto && 'IntersectionObserver' in window) {
+    linea.classList.add('linea--viva');
 
     const observador = new IntersectionObserver(
-      (entradas) => {
-        for (const e of entradas) {
-          const pasado = e.isIntersecting || e.boundingClientRect.top < 0;
-          e.target.classList.toggle('alcanzado', pasado);
-        }
+      ([e]) => {
+        const pasado = e.isIntersecting || e.boundingClientRect.top < 0;
+        linea.classList.toggle('alcanzada', pasado);
       },
       { rootMargin: '0px 0px -45% 0px', threshold: 0 }
     );
 
-    for (const paso of pasos) observador.observe(paso);
+    observador.observe(linea);
   }
 </script>
 
@@ -116,17 +117,34 @@ const pasos = [
     opacity: 0.25;
   }
 
+  /* Un trazo continuo: cada tramo arranca justo cuando acaba el
+     anterior, a velocidad constante, y solo el primero acelera y el
+     último frena. Al dibujarse el orden es 1→4 (--i); al borrarse,
+     4→1 (--j), así nunca se vacía el principio de la línea antes que
+     el final. */
+  .paso {
+    --tramo: 320ms;
+    --curva: linear;
+  }
+
   .paso::after {
     inline-size: var(--border-w-thick);
     background: var(--paso-c);
     transform-origin: top;
-    /* Al ritmo del resto de la página: cada tramo tarda lo que una
-       entrada de foto y el siguiente arranca antes de que acabe, así
-       la línea se lee como un recorrido sin hacerse esperar. */
-    transition: transform 700ms cubic-bezier(0.45, 0, 0.2, 1) calc(var(--i) * 220ms);
+    transition: transform var(--tramo) var(--curva) calc(var(--j) * var(--tramo));
   }
 
-  .linea--viva .paso:not(.alcanzado)::after { transform: scaleY(0); }
+  .linea--viva.alcanzada .paso::after {
+    transition-delay: calc(var(--i) * var(--tramo));
+  }
+
+  .linea--viva.alcanzada .paso:first-child,
+  .linea--viva:not(.alcanzada) .paso:last-child { --curva: cubic-bezier(0.5, 0, 1, 1); }
+
+  .linea--viva.alcanzada .paso:last-child,
+  .linea--viva:not(.alcanzada) .paso:first-child { --curva: cubic-bezier(0, 0, 0.3, 1); }
+
+  .linea--viva:not(.alcanzada) .paso::after { transform: scaleY(0); }
 
   .paso__n {
     display: block;
@@ -136,12 +154,18 @@ const pasos = [
     line-height: 0.9;
     color: var(--paso-c);
     font-variant-numeric: tabular-nums;
-    transition: color 400ms ease calc(var(--i) * 220ms + 300ms);
+    /* El número se apaga junto con su tramo al borrarse la línea… */
+    transition: color 300ms ease calc(var(--j) * var(--tramo));
+  }
+
+  /* …y se enciende cuando su tramo ya va casi completo. */
+  .linea--viva.alcanzada .paso__n {
+    transition-delay: calc(var(--i) * var(--tramo) + var(--tramo) * 0.6);
   }
 
   /* Hasta que el paso no se alcanza, su número espera en tinta suave:
      así se lee cuál viene después. */
-  .linea--viva .paso:not(.alcanzado) .paso__n { color: var(--color-muted); }
+  .linea--viva:not(.alcanzada) .paso__n { color: var(--color-muted); }
 
   .paso h3 {
     margin-block: var(--space-2);
@@ -179,6 +203,6 @@ const pasos = [
       transform-origin: left;
     }
 
-    .linea--viva .paso:not(.alcanzado)::after { transform: scaleX(0); }
+    .linea--viva:not(.alcanzada) .paso::after { transform: scaleX(0); }
   }
 </style>
