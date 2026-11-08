@@ -7,8 +7,8 @@
  */
 
 export const SITE = {
-  /** URL final con tu dominio. Mientras no lo tengas: https://thisislexx.github.io */
-  url: 'https://thisislexx.github.io',
+  /** URL final del sitio (dominio propio, conectado en GitHub → Settings → Pages) */
+  url: 'https://producedbylexx.com',
   name: 'LEXX',
   role: 'Productor Musical',
   /** Aparece en el <title> por defecto y en los resultados de búsqueda */
